@@ -13,7 +13,7 @@ PROGRAM = cutter
 
 SOURCES := $(shell find $(SRC_DIR) -type f -name "*.cpp")
 OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
-INCLUDES := inc/Particle.h inc/Event.h inc/ParticleTree.h inc/linkdef.h
+INCLUDES := inc/Particle.h inc/Event.h inc/ParticleTree.h inc/AccCut.h inc/PPMCut.h inc/linkdef.h
 
 all: $(PROGRAM)
 

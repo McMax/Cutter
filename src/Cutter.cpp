@@ -1,15 +1,132 @@
 #include <iostream>
+#include <string>
 #include <cstdlib>
+
+#include "TMath.h"
+#include "TCutG.h"
 
 #include "ParticleTree.h"
 #include "Event.h"
 #include "Particle.h"
+#include "AccCut.h"
+#include "dEdxCut.h"
+#include "PPMCut.h"
 
 using namespace std;
 
-int main(int argc, char** argv)
+void RunAccCut(const int ener)
 {
-	const TString mult_string = argv[1];
+	cout << "Running acceptance mode" << endl;
+
+	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree("ParticleTree_acc.root");
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	AccCut acc_map("acceptance-map-medium.root",ener);
+
+	float pt, E, p, y, angle;
+	const float pion_mass = 0.13957018; //GeV/c^2
+	const float nucleon_mass = 0.9389186795; //GeV/c^2
+	const float beta = (ener/(ener+nucleon_mass));
+	const float y_cms = 0.5*TMath::Log((1+beta)/(1-beta));
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%5000))
+			cout << "Event: " << ev << endl;
+
+			input_tree->GetEntry(ev);
+			Npa = event->GetNpa();
+			output_tree.BeginEvent();
+
+			for(part=0; part<Npa; part++)
+			{
+				particle = event->GetParticle(part);
+				pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+				E = TMath::Sqrt(pion_mass*pion_mass+p*p);
+				y = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz())) - y_cms;
+				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
+
+				//CIECIE NA AKCEPTACJE
+				if(acc_map.acceptanceCut(particle->GetPx(),pt,particle->GetCharge(),y,angle))
+					output_tree.AddParticle(particle->GetCharge(),
+												particle->GetBx(), particle->GetBy(),
+												particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+			}
+
+			output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+}
+
+void RunPPMCut()
+{
+	cout << "Running particle population map mode" << endl;
+
+	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree("ParticleTree_ppm.root");
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	PPMCut partpopmatrix("PartPopMatrix.root");
+
+	float pt, p, angle;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%5000))
+			cout << "Event: " << ev << endl;
+
+			input_tree->GetEntry(ev);
+			Npa = event->GetNpa();
+			output_tree.BeginEvent();
+
+			for(part=0; part<Npa; part++)
+			{
+				particle = event->GetParticle(part);
+				pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
+
+				//CIECIE NA AKCEPTACJE
+				if(partpopmatrix.PartPopMatrixCut(particle->GetCharge(),p,pt,angle))
+					output_tree.AddParticle(particle->GetCharge(),
+												particle->GetBx(), particle->GetBy(),
+												particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+			}
+
+			output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+}
+
+void RunMultSplit(const TString mult_string)
+{
+	cout << "Running multiplicity splitter mode" << endl;
 	const UInt_t multiplicity = atoi(mult_string);
 
 	TFile *input_rootfile = new TFile("ParticleTree.root");
@@ -38,7 +155,8 @@ int main(int argc, char** argv)
 	//DLA WSZYSTKICH
 	for(ev=0; ev<treeNentries; ++ev)
 	{
-		cout << "\rEvent: " << ev;
+		if(!(ev%5000))
+			cout << "Event: " << ev << endl;
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
 		Npos = event->GetNpos();
@@ -50,8 +168,8 @@ int main(int argc, char** argv)
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				//output_tree_all.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz());
-				output_tree_all.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz());
+				//output_tree_all.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+				output_tree_all.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 			}
 			++all_count;
 			output_tree_all.EndEvent();
@@ -64,8 +182,8 @@ int main(int argc, char** argv)
 			{
 				particle = event->GetParticle(part);
 				if((particle->GetCharge())>0)
-					//output_tree_pos.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz());
-					output_tree_pos.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz());
+					//output_tree_pos.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+					output_tree_pos.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 			}
 			++pos_count;
 			output_tree_pos.EndEvent();
@@ -78,8 +196,8 @@ int main(int argc, char** argv)
 			{
 				particle = event->GetParticle(part);
 				if((particle->GetCharge())<0)
-					//output_tree_neg.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz());
-					output_tree_neg.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz());
+					//output_tree_neg.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+					output_tree_neg.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 			}
 			++neg_count;
 			output_tree_neg.EndEvent();
@@ -93,4 +211,77 @@ int main(int argc, char** argv)
 	output_tree_pos.Close();
 	output_tree_neg.Close();
 	input_rootfile->Close();
+}
+
+void RunDedxCut()
+{
+	cout << "Running dE/dx mode" << endl;
+	initialise_dedx_cutg();
+	
+	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree("ParticleTree_dedx.root");
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	float p;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%5000))
+			cout << "Event: " << ev << endl;
+
+			input_tree->GetEntry(ev);
+			Npa = event->GetNpa();
+			output_tree.BeginEvent();
+
+			for(part=0; part<Npa; part++)
+			{
+				particle = event->GetParticle(part);
+				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+				if(cutg->IsInside(p,particle->GetDedx()))
+					continue;
+
+				output_tree.AddParticle(particle->GetCharge(),
+						particle->GetBx(), particle->GetBy(),
+						particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+			}
+			output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+}
+
+int main(int argc, char** argv)
+{
+	string cut_mode = argv[1];
+	TString mult_string;
+
+	cout << "cut mode:" << cut_mode << endl;
+	if(!(cut_mode.compare("NA61ACC")))
+	{
+		cout << "WARNING: Energy fixed to 158 GeV!" << endl;
+		RunAccCut(158);
+	}
+	else if(!(cut_mode.compare("PPM")))
+		RunPPMCut();
+	else if(!(cut_mode.compare("MULTSPLIT")))
+	{
+		mult_string = argv[2];
+		RunMultSplit(mult_string);
+	}
+	else if(!(cut_mode.compare("DEDX")))
+	{
+		cout << "WARNING: Using only pp@158 graphical cut!" << endl;
+		RunDedxCut();
+	}
 }
