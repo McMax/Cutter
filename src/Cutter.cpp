@@ -282,6 +282,7 @@ int main(int argc, char** argv)
 	else if(!(cut_mode.compare("DEDX")))
 	{
 		cout << "WARNING: Using only pp@158 graphical cut!" << endl;
+		//cout << "WARNING: Using only PbPb@160 graphical cut!" << endl;
 		RunDedxCut();
 	}
 }
