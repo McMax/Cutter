@@ -61,8 +61,10 @@ void RunAccCut(const int ener)
 				//CIECIE NA AKCEPTACJE
 				if(acc_map.acceptanceCut(particle->GetPx(),pt,particle->GetCharge(),y,angle))
 					output_tree.AddParticle(particle->GetCharge(),
-												particle->GetBx(), particle->GetBy(),
-												particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+					particle->GetBx(), particle->GetBy(),
+					particle->GetPx(), particle->GetPy(), particle->GetPz(),
+					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
 			}
 
 			output_tree.EndEvent();
@@ -113,8 +115,10 @@ void RunPPMCut()
 				//CIECIE NA AKCEPTACJE
 				if(partpopmatrix.PartPopMatrixCut(particle->GetCharge(),p,pt,angle))
 					output_tree.AddParticle(particle->GetCharge(),
-												particle->GetBx(), particle->GetBy(),
-												particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+					particle->GetBx(), particle->GetBy(),
+					particle->GetPx(), particle->GetPy(), particle->GetPz(),
+					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
 			}
 
 			output_tree.EndEvent();
@@ -169,7 +173,11 @@ void RunMultSplit(const TString mult_string)
 			{
 				particle = event->GetParticle(part);
 				//output_tree_all.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
-				output_tree_all.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+				output_tree_all.AddParticle(particle->GetCharge(),
+						particle->GetBx(), particle->GetBy(),
+						particle->GetPx(), particle->GetPy(), particle->GetPz(),
+						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
 			}
 			++all_count;
 			output_tree_all.EndEvent();
@@ -183,7 +191,11 @@ void RunMultSplit(const TString mult_string)
 				particle = event->GetParticle(part);
 				if((particle->GetCharge())>0)
 					//output_tree_pos.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
-					output_tree_pos.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+				output_tree_pos.AddParticle(particle->GetCharge(),
+						particle->GetBx(), particle->GetBy(),
+						particle->GetPx(), particle->GetPy(), particle->GetPz(),
+						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
 			}
 			++pos_count;
 			output_tree_pos.EndEvent();
@@ -197,7 +209,11 @@ void RunMultSplit(const TString mult_string)
 				particle = event->GetParticle(part);
 				if((particle->GetCharge())<0)
 					//output_tree_neg.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
-					output_tree_neg.AddParticle(particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+				output_tree_neg.AddParticle(particle->GetCharge(),
+						particle->GetBx(), particle->GetBy(),
+						particle->GetPx(), particle->GetPy(), particle->GetPz(),
+						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
 			}
 			++neg_count;
 			output_tree_neg.EndEvent();
@@ -213,15 +229,15 @@ void RunMultSplit(const TString mult_string)
 	input_rootfile->Close();
 }
 
-void RunDedxCut()
+void RunDedxCut(TString inputfile, TString outputfile)
 {
 	cout << "Running dE/dx mode" << endl;
 	initialise_dedx_cutg();
 	
-	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
-	ParticleTree output_tree("ParticleTree_dedx.root");
+	ParticleTree output_tree(outputfile);
 
 	Event *event = new Event();
 	Particle *particle;
@@ -247,12 +263,14 @@ void RunDedxCut()
 			{
 				particle = event->GetParticle(part);
 				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
-				if(cutg->IsInside(p,particle->GetDedx()))
+				if(cutg->IsInside(p,particle->GetdEdx()))
 					continue;
 
 				output_tree.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
-						particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
+						particle->GetPx(), particle->GetPy(), particle->GetPz(),
+						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
 			}
 			output_tree.EndEvent();
 	}
@@ -263,26 +281,28 @@ void RunDedxCut()
 
 int main(int argc, char** argv)
 {
-	string cut_mode = argv[1];
+	TString cut_mode = argv[1];
+	TString inputfile = argv[2];
+	TString outputfile = argv[3];
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
-	if(!(cut_mode.compare("NA61ACC")))
+	if(!(cut_mode.CompareTo("NA61ACC")))
 	{
 		cout << "WARNING: Energy fixed to 158 GeV!" << endl;
 		RunAccCut(158);
 	}
-	else if(!(cut_mode.compare("PPM")))
+	else if(!(cut_mode.CompareTo("PPM")))
 		RunPPMCut();
-	else if(!(cut_mode.compare("MULTSPLIT")))
+	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
 		mult_string = argv[2];
 		RunMultSplit(mult_string);
 	}
-	else if(!(cut_mode.compare("DEDX")))
+	else if(!(cut_mode.CompareTo("DEDX")))
 	{
 		cout << "WARNING: Using only pp@158 graphical cut!" << endl;
 		//cout << "WARNING: Using only PbPb@160 graphical cut!" << endl;
-		RunDedxCut();
+		RunDedxCut(inputfile, outputfile);
 	}
 }
