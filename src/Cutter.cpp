@@ -213,15 +213,15 @@ void RunMultSplit(const TString mult_string)
 	input_rootfile->Close();
 }
 
-void RunDedxCut()
+void RunDedxCut(TString inputfile, TString outputfile)
 {
 	cout << "Running dE/dx mode" << endl;
 	initialise_dedx_cutg();
 	
-	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
-	ParticleTree output_tree("ParticleTree_dedx.root");
+	ParticleTree output_tree(outputfile);
 
 	Event *event = new Event();
 	Particle *particle;
@@ -263,7 +263,9 @@ void RunDedxCut()
 
 int main(int argc, char** argv)
 {
-	string cut_mode = argv[1];
+	TString cut_mode = argv[1];
+	TString inputfile = argv[2];
+	TString outputfile = argv[3];
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
@@ -283,6 +285,6 @@ int main(int argc, char** argv)
 	{
 		cout << "WARNING: Using only pp@158 graphical cut!" << endl;
 		//cout << "WARNING: Using only PbPb@160 graphical cut!" << endl;
-		RunDedxCut();
+		RunDedxCut(inputfile, outputfile);
 	}
 }
