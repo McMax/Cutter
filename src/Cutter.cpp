@@ -275,6 +275,8 @@ void RunDedxCut(TString inputfile, TString outputfile)
 	UInt_t Npa;
 	UInt_t part;
 
+	Float_t local_dedx;
+
 	float p;
 
 	for(ev=0; ev<treeNentries; ++ev)
@@ -290,8 +292,12 @@ void RunDedxCut(TString inputfile, TString outputfile)
 		{
 			particle = event->GetParticle(part);
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
-			if(cutg->IsInside(p,choose_dedx(particle)))
+			local_dedx = choose_dedx(particle);
+			if(cutg->IsInside(p,local_dedx))
 				continue;
+
+			if(local_dedx > 1.65)
+				continue;		//dodatkowy cut 3.02.2013
 
 			output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
@@ -328,8 +334,9 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
-		cout << "WARNING: Using only pp@158 graphical cut!" << endl;
-		//cout << "WARNING: Using only PbPb@160 graphical cut!" << endl;
+		//cout << "WARNING: Using only pp@158 graphical cut!" << endl;
+		cout << "WARNING: Using only PbPb@160 graphical cut!" << endl;
+		cout << "Cut dE/dx > 1.65 applied" << endl;
 		RunDedxCut(inputfile, outputfile);
 	}
 }

@@ -3,35 +3,39 @@
 
 TCutG *cutg = new TCutG("dedx_cut",10);
 void initialise_dedx_cutg(){
-  cutg->SetVarX("TMath::Log10(p)");
-  cutg->SetVarY("dedx");
-  cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 158 GeV/c");
-  cutg->SetFillColor(1);
-  cutg->SetPoint(0,0.344283,1.90);
-  cutg->SetPoint(1,0.344283,1.20);
-  cutg->SetPoint(2,1.58,1.35);
-  cutg->SetPoint(3,3.4829,1.40727);
-  cutg->SetPoint(4,10.50171,1.45138);
-  cutg->SetPoint(5,20,1.49148);
-  cutg->SetPoint(6,20,1.65589);
-  cutg->SetPoint(7,2.57344,1.90);
-  cutg->SetPoint(8,0.396975,1.90);
-  cutg->SetPoint(9,0.3442825,1.90);
-  /*
-  cutg->SetPoint(0,0.828572,1.24279);
-  cutg->SetPoint(1,1.18813,1.54846);
-  cutg->SetPoint(2,2.18922,1.65283);
-  cutg->SetPoint(3,4.5015,1.71248);
-  cutg->SetPoint(4,7.31708,1.70502);
-  cutg->SetPoint(5,11.5267,1.7423);
-  cutg->SetPoint(6,11.3475,1.98832);
-  cutg->SetPoint(7,5.7843,2.2418);
-  cutg->SetPoint(8,3.09042,2.43564);
-  cutg->SetPoint(9,0.969144,2.42818);
-  cutg->SetPoint(10,0.665348,2.14488);
-  cutg->SetPoint(11,0.634792,1.84667);
-  cutg->SetPoint(12,0.665348,1.29498);
-  cutg->SetPoint(13,0.828572,1.24279);
-  */
-  cutg->Draw();
+	cutg->SetVarX("TMath::Log10(p)");
+	cutg->SetVarY("dedx");
+	//cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 158 GeV/c");
+	cutg->SetTitle("e^{-} dE/dx cut for 00B Pb+Pb @ 160 GeV/c");
+/*
+	cutg->SetFillColor(1);
+	   cutg->SetPoint(0,0.344283,1.90);
+	   cutg->SetPoint(1,0.344283,1.20);
+	   cutg->SetPoint(2,1.58,1.35);
+	   cutg->SetPoint(3,3.4829,1.40727);
+	   cutg->SetPoint(4,10.50171,1.45138);
+	   cutg->SetPoint(5,20,1.49148);
+	   cutg->SetPoint(6,20,1.65589);
+	   cutg->SetPoint(7,2.57344,1.90);
+	   cutg->SetPoint(8,0.396975,1.90);
+	   cutg->SetPoint(9,0.3442825,1.90);
+*/
+	cutg->SetPoint(0,0.425317,1.89959);
+	cutg->SetPoint(1,2.7223,1.89959);
+	cutg->SetPoint(2,4.71651,1.86649);
+	cutg->SetPoint(3,7.05759,1.83339);
+	cutg->SetPoint(4,10.8218,1.7861);
+	cutg->SetPoint(5,19.449,1.66315);
+	cutg->SetPoint(6,19.2129,1.5733);
+	cutg->SetPoint(7,12.0792,1.53074);
+	cutg->SetPoint(8,6.02148,1.48818);
+	cutg->SetPoint(9,3.78571,1.43143);
+	cutg->SetPoint(10,2.59251,1.38887);
+	cutg->SetPoint(11,1.5522,1.35577);
+	cutg->SetPoint(12,1.02473,1.28484);
+	cutg->SetPoint(13,0.701748,1.25646);
+	cutg->SetPoint(14,0.529891,1.21863);
+	cutg->SetPoint(15,0.376419,1.2139);
+	cutg->SetPoint(16,0.376419,1.89959);
+	cutg->SetPoint(17,0.425317,1.89959);
 }
