@@ -256,10 +256,11 @@ Float_t choose_dedx(Particle *particle)
 	}
 }
 
-void RunDedxCut(TString inputfile, TString outputfile)
+void RunDedxCut(TString inputfile, TString outputfile, Int_t energy)
 {
-	cout << "Running dE/dx mode" << endl;
-	initialise_dedx_cutg();
+	cout << "Running dE/dx mode with energy " << energy << endl;
+	TCutG* cutg = initialise_dedx_cutg(energy);
+	cout << "Graphcut intialized" << endl;
 	
 	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
@@ -276,8 +277,16 @@ void RunDedxCut(TString inputfile, TString outputfile)
 	UInt_t part;
 
 	Float_t local_dedx;
+	Float_t dedx_uppercut;
+
+	if((energy == 158 ) || (energy == 160))
+		dedx_uppercut = 1.65;
+	else if(energy == 20)
+		dedx_uppercut = 1.6;
 
 	float p;
+
+	cout << "Cut dE/dx > " << dedx_uppercut << " applied" << endl;
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
@@ -296,7 +305,7 @@ void RunDedxCut(TString inputfile, TString outputfile)
 			if(cutg->IsInside(p,local_dedx))
 				continue;
 
-			if(local_dedx > 1.65)
+			if(local_dedx > dedx_uppercut)
 				continue;		//dodatkowy cut 3.02.2013
 
 			output_tree.AddParticle(particle->GetCharge(),
@@ -315,8 +324,9 @@ void RunDedxCut(TString inputfile, TString outputfile)
 int main(int argc, char** argv)
 {
 	TString cut_mode = argv[1];
-	TString inputfile = argv[2];
-	TString outputfile = argv[3];
+	TString energy = argv[2];
+	TString inputfile = argv[3];
+	TString outputfile = argv[4];
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
@@ -334,9 +344,13 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
+		if(argc != 5)
+		{
+			cout << "DEDX cut requires additional arguments: 1.energy, 2.inputfile, 3.outputfile" << endl;
+			return 0;
+		}
 		//cout << "WARNING: Using only pp@158 graphical cut!" << endl;
-		cout << "WARNING: Using only PbPb@160 graphical cut!" << endl;
-		cout << "Cut dE/dx > 1.65 applied" << endl;
-		RunDedxCut(inputfile, outputfile);
+		cout << "WARNING: Using only PbPb graphical cuts!" << endl;
+		RunDedxCut(inputfile, outputfile, energy.Atoi());
 	}
 }

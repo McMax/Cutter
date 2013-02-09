@@ -1,12 +1,15 @@
 #include "TCutG.h"
 
+#include <iostream>
+
 #include "dEdxCut.h"
 
 TCutG* initialise_dedx_cutg(Int_t energy)
 {
-	TCutG *cutg;
+	TCutG *cutg = new TCutG();
 	if((energy == 160) || (energy == 158))
 	{
+
 		cutg = new TCutG("dedx_cut",18);
 		//cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 158 GeV/c");
 		cutg->SetTitle("e^{-} dE/dx cut for 00B Pb+Pb @ 160 GeV/c");
@@ -41,10 +44,12 @@ TCutG* initialise_dedx_cutg(Int_t energy)
 		cutg->SetPoint(15,0.376419,1.2139);
 		cutg->SetPoint(16,0.376419,1.89959);
 		cutg->SetPoint(17,0.425317,1.89959);
+
 	}
 	else if(energy == 20)
 	{
-		TCutG *cutg = new TCutG("dedx_cut",15);
+
+		cutg = new TCutG("dedx_cut",15);
 		cutg->SetTitle("e^{-} dE/dx cut for 03A Pb+Pb @ 20 GeV/c");
 		cutg->SetFillColor(1);
 		cutg->SetPoint(0,0.0606792,1.7197);
@@ -62,6 +67,7 @@ TCutG* initialise_dedx_cutg(Int_t energy)
 		cutg->SetPoint(12,0.0630318,1.25622);
 		cutg->SetPoint(13,0.0599146,1.5933);
 		cutg->SetPoint(14,0.0606792,1.7197);
+
 	}
 	cutg->SetVarX("TMath::Log10(p)");
 	cutg->SetVarY("dedx");
