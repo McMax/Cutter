@@ -74,14 +74,14 @@ void RunAccCut(const int ener)
 	input_rootfile->Close();
 }
 
-void RunPPMCut()
+void RunPPMCut(TString inputfile, TString outputfile, TString system, TString energy)
 {
-	cout << "Running particle population map mode" << endl;
+	cout << "Running particle population matrix mode" << endl;
 
-	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
-	ParticleTree output_tree("ParticleTree_ppm.root");
+	ParticleTree output_tree(outputfile);
 
 	Event *event = new Event();
 	Particle *particle;
@@ -92,7 +92,7 @@ void RunPPMCut()
 	UInt_t Npa;
 	UInt_t part;
 
-	PPMCut partpopmatrix("PartPopMatrix.root");
+	PPMCut partpopmatrix("PartPopMatrix.root",system, energy);
 
 	float pt, p, angle;
 
@@ -256,10 +256,10 @@ Float_t choose_dedx(Particle *particle)
 	}
 }
 
-void RunDedxCut(TString inputfile, TString outputfile, Int_t energy)
+void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t energy)
 {
 	cout << "Running dE/dx mode with energy " << energy << endl;
-	TCutG* cutg = initialise_dedx_cutg(energy);
+	TCutG* cutg = initialise_dedx_cutg(system, energy);
 	cout << "Graphcut intialized" << endl;
 	
 	TFile *input_rootfile = new TFile(inputfile);
@@ -325,8 +325,9 @@ int main(int argc, char** argv)
 {
 	TString cut_mode = argv[1];
 	TString energy = argv[2];
-	TString inputfile = argv[3];
-	TString outputfile = argv[4];
+	TString system = argv[3];
+	TString inputfile = argv[4];
+	TString outputfile = argv[5];
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
@@ -336,7 +337,14 @@ int main(int argc, char** argv)
 		RunAccCut(158);
 	}
 	else if(!(cut_mode.CompareTo("PPM")))
-		RunPPMCut();
+	{
+		if(argc != 6)
+		{
+			cout << "PPM cut requires additional arguments: 1.energy, 2.system, 3.inputfile, 4.outputfile" << endl;
+			return 0;
+		}
+		RunPPMCut(inputfile, outputfile, system, energy);
+	}
 	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
 		mult_string = argv[2];
@@ -344,13 +352,11 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
-		if(argc != 5)
+		if(argc != 6)
 		{
-			cout << "DEDX cut requires additional arguments: 1.energy, 2.inputfile, 3.outputfile" << endl;
+			cout << "DEDX cut requires additional arguments: 1.energy, 2. system, 3.inputfile, 4.outputfile" << endl;
 			return 0;
 		}
-		//cout << "WARNING: Using only pp@158 graphical cut!" << endl;
-		cout << "WARNING: Using only PbPb graphical cuts!" << endl;
-		RunDedxCut(inputfile, outputfile, energy.Atoi());
+		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
 	}
 }

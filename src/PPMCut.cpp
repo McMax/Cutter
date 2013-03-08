@@ -4,9 +4,9 @@
 
 #include "PPMCut.h"
 
-PPMCut::PPMCut(const TString filename)
+PPMCut::PPMCut(const TString filename, const TString system, const TString energy)
 {
-	openPPMFile(filename);
+	openPPMFile(filename, system, energy);
 }
 
 PPMCut::~PPMCut()
@@ -14,7 +14,7 @@ PPMCut::~PPMCut()
 	closePPMFile();
 }
 
-void PPMCut::openPPMFile(const TString filename)
+void PPMCut::openPPMFile(const TString filename, const TString system, const TString energy)
 {
 	static TString temp;
 
@@ -23,8 +23,10 @@ void PPMCut::openPPMFile(const TString filename)
 	if(ppm_file->IsZombie())
 		std::cout << "File " << filename << " not opened" << std::endl;
 
-	partpopmatrix_pos = (TH3I*)ppm_file->Get("histPartPopMatrixPos");
-	partpopmatrix_neg = (TH3I*)ppm_file->Get("histPartPopMatrixNeg");
+	temp = system + "/" + energy + "/histPartPopMatrixPos";
+	std::cout << "Opening histogram " << temp << std::endl;
+	partpopmatrix_pos = (TH3I*)ppm_file->Get(system+"/"+energy+"/histPartPopMatrixPos");
+	partpopmatrix_neg = (TH3I*)ppm_file->Get(system+"/"+energy+"/histPartPopMatrixNeg");
 }
 
 void PPMCut::closePPMFile()

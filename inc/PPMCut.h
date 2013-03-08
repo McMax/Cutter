@@ -12,11 +12,11 @@ class PPMCut
 
 public:
 	PPMCut() {}
-	PPMCut(const TString);
+	PPMCut(const TString, const TString, const TString);
 	~PPMCut();
 
 	bool PartPopMatrixCut(const int, const double, const double, const double);
 
-	void openPPMFile(const TString);
+	void openPPMFile(const TString, const TString, const TString);
 	void closePPMFile();
 };
