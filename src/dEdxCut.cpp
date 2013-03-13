@@ -10,20 +10,49 @@ TCutG* initialise_dedx_cutg(TString system, Int_t energy)
 
 	if(!(system.CompareTo("pp")))
 	{
-			std::cout << "Using p+p@158 cut (12E002)" << std::endl;
-			cutg = new TCutG("dedx_cut",10);
-			cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 158 GeV/c");
-			cutg->SetFillColor(1);
-			cutg->SetPoint(0,0.344283,1.90);
-			cutg->SetPoint(1,0.344283,1.20);
-			cutg->SetPoint(2,1.58,1.35);
-			cutg->SetPoint(3,3.4829,1.40727);
-			cutg->SetPoint(4,10.50171,1.45138);
-			cutg->SetPoint(5,20,1.49148);
-			cutg->SetPoint(6,20,1.65589);
-			cutg->SetPoint(7,2.57344,1.90);
-			cutg->SetPoint(8,0.396975,1.90);
-			cutg->SetPoint(9,0.3442825,1.90);
+		switch(energy)
+		{
+			case 158:
+			{
+				std::cout << "Using p+p@158 cut (12E002)" << std::endl;
+				cutg = new TCutG("dedx_cut",10);
+				cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 158 GeV/c");
+				cutg->SetFillColor(1);
+				cutg->SetPoint(0,0.344283,1.90);
+				cutg->SetPoint(1,0.344283,1.20);
+				cutg->SetPoint(2,1.58,1.35);
+				cutg->SetPoint(3,3.4829,1.40727);
+				cutg->SetPoint(4,10.50171,1.45138);
+				cutg->SetPoint(5,20,1.49148);
+				cutg->SetPoint(6,20,1.65589);
+				cutg->SetPoint(7,2.57344,1.90);
+				cutg->SetPoint(8,0.396975,1.90);
+				cutg->SetPoint(9,0.3442825,1.90);
+				break;
+			}
+
+			case 31:
+			{
+				std::cout << "Using p+p@31 cut (12E002)" << std::endl;
+				cutg = new TCutG("dedx_cut",13);
+				cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 31 GeV/c");
+				cutg->SetFillColor(1);
+				cutg->SetPoint(0,0.127665,1.26329);
+				cutg->SetPoint(1,0.420062,1.30689);
+				cutg->SetPoint(2,1.06687,1.3505);
+				cutg->SetPoint(3,2.78069,1.40656);
+				cutg->SetPoint(4,10.1478,1.46262);
+				cutg->SetPoint(5,12.6459,1.51869);
+				cutg->SetPoint(6,12.1642,1.6495);
+				cutg->SetPoint(7,2.74493,1.74917);
+				cutg->SetPoint(8,0.611444,1.81146);
+				cutg->SetPoint(9,0.267016,1.83638);
+				cutg->SetPoint(10,0.101128,1.73671);
+				cutg->SetPoint(11,0.0877058,1.56229);
+				cutg->SetPoint(12,0.127665,1.26329);
+				break;
+			}
+		}
 	}
 	else if(!(system.CompareTo("PbPb")))
 	{
