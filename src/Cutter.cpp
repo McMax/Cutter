@@ -277,12 +277,15 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 	UInt_t part;
 
 	Float_t local_dedx;
-	Float_t dedx_uppercut;
+	Float_t dedx_uppercut = 3.;
 
-	if((energy == 158 ) || (energy == 160))
-		dedx_uppercut = 1.65;
-	else if(energy == 20)
-		dedx_uppercut = 1.6;
+	if(!(system.CompareTo("PbPb")))
+	{	
+		if((energy == 158 ) || (energy == 160))
+			dedx_uppercut = 1.65;
+		else if(energy == 20)
+			dedx_uppercut = 1.6;
+	}
 
 	float p;
 

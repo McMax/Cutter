@@ -31,6 +31,28 @@ TCutG* initialise_dedx_cutg(TString system, Int_t energy)
 				break;
 			}
 
+			case 80:
+			{
+				std::cout << "Using p+p@80 cut (12E002)" << std::endl;
+				cutg = new TCutG("dedx_cut",13);
+				cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 80 GeV/c");
+				cutg->SetFillColor(1);
+				cutg->SetPoint(0,0.284871,1.84884);
+				cutg->SetPoint(1,0.369055,1.36919);
+				cutg->SetPoint(2,0.705019,1.33804);
+				cutg->SetPoint(3,2.03808,1.38164);
+				cutg->SetPoint(4,5.38127,1.43148);
+				cutg->SetPoint(5,12.3227,1.46885);
+				cutg->SetPoint(6,24.1579,1.52492);
+				cutg->SetPoint(7,23.5404,1.62458);
+				cutg->SetPoint(8,8.14319,1.76786);
+				cutg->SetPoint(9,2.67477,1.89867);
+				cutg->SetPoint(10,0.974441,1.95473);
+				cutg->SetPoint(11,0.404061,1.96096);
+				cutg->SetPoint(12,0.284871,1.84884);
+				break;
+			}
+
 			case 31:
 			{
 				std::cout << "Using p+p@31 cut (12E002)" << std::endl;
