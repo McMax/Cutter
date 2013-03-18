@@ -74,6 +74,26 @@ TCutG* initialise_dedx_cutg(TString system, Int_t energy)
 				cutg->SetPoint(12,0.127665,1.26329);
 				break;
 			}
+
+			case 20:
+			{
+				std::cout << "Using p+p@20 cut (12E002)" << std::endl;
+				cutg = new TCutG("dedx_cut",11);
+				cutg->SetTitle("e^{-} dE/dx cut for 12E002 p+p @ 20 GeV/c");
+				cutg->SetFillColor(1);
+				cutg->SetPoint(0,0.0459112,1.62458);
+				cutg->SetPoint(1,0.627482,1.78654);
+				cutg->SetPoint(2,3.20625,1.7554);
+				cutg->SetPoint(3,9.38942,1.61836);
+				cutg->SetPoint(4,9.14944,1.48131);
+				cutg->SetPoint(5,3.46521,1.42525);
+				cutg->SetPoint(6,1.0396,1.38787);
+				cutg->SetPoint(7,0.465898,1.31312);
+				cutg->SetPoint(8,0.193189,1.27575);
+				cutg->SetPoint(9,0.0843649,1.14493);
+				cutg->SetPoint(10,0.0459112,1.62458);
+				break;
+			}
 		}
 	}
 	else if(!(system.CompareTo("PbPb")))
