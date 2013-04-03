@@ -229,30 +229,35 @@ void RunMultSplit(const TString mult_string)
 	input_rootfile->Close();
 }
 
-Float_t choose_dedx(Particle *particle)
+Float_t choose_dedx(Particle *particle, TString system)
 {
 	static Int_t vtpc1_part;
 	static Int_t vtpc2_part;
 	static Int_t mtpc_part;
 
-	vtpc1_part = particle->GetNdEdxVtpc1();
-	vtpc2_part = particle->GetNdEdxVtpc2();
-	mtpc_part = particle->GetNdEdxMtpc();
+	if(!(system.CompareTo("pp")))
+		return particle->GetdEdx();
+	else if(!(system.CompareTo("PbPb")))
+	{
+		vtpc1_part = particle->GetNdEdxVtpc1();
+		vtpc2_part = particle->GetNdEdxVtpc2();
+		mtpc_part = particle->GetNdEdxMtpc();
 
-	//std::cout << "dE/dx: VTPC1 part: " << vtpc1_part << "\tVTPC2 part: " << vtpc2_part << "\tMTPC part: " << mtpc_part << std::endl;
-	if((vtpc1_part == 0) && (vtpc2_part == 0) && (mtpc_part == 0))
-	{
-		std::cout << "WTF? Particle with no dE/dx information!" << std::endl;
-		return 0;
-	}
-	else
-	{
-		if(mtpc_part > 0)
-			return (particle->GetdEdxMtpc());
-		else if(vtpc2_part >= vtpc1_part)
-			return (particle->GetdEdxVtpc2());
+		//std::cout << "dE/dx: VTPC1 part: " << vtpc1_part << "\tVTPC2 part: " << vtpc2_part << "\tMTPC part: " << mtpc_part << std::endl;
+		if((vtpc1_part == 0) && (vtpc2_part == 0) && (mtpc_part == 0))
+		{
+			std::cout << "WTF? Particle with no dE/dx information!" << std::endl;
+			return 0;
+		}
 		else
-			return (particle->GetdEdxVtpc1());
+		{
+			if(mtpc_part > 0)
+				return (particle->GetdEdxMtpc());
+			else if(vtpc2_part >= vtpc1_part)
+				return (particle->GetdEdxVtpc2());
+			else
+				return (particle->GetdEdxVtpc1());
+		}
 	}
 }
 
@@ -304,7 +309,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 		{
 			particle = event->GetParticle(part);
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
-			local_dedx = choose_dedx(particle);
+			local_dedx = choose_dedx(particle, system);
 			if(cutg->IsInside(p,local_dedx))
 				continue;
 
