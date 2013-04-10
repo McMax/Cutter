@@ -329,6 +329,79 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 	input_rootfile->Close();
 }
 
+Bool_t is_electron(double logP, double dEdx) {
+	static const double a1 = 0.108696;
+	static const double b1 = 1.358696;
+	static const double a2 = -0.152174;
+	static const double b2 = 1.747826;
+
+	//cout << "logP=" << logP << " dedx=" << dEdx << endl;
+
+	if((logP > -2) && (logP < 2))
+	{
+		if((dEdx > a1*logP + b1) && (dEdx < a2*logP + b2))
+			return kTRUE;
+		else
+			return kFALSE;
+	}
+	else
+		return kFALSE;
+} 
+
+void RunDedxCut2(TString inputfile, TString outputfile)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	Float_t local_dedx;
+	//Float_t dedx_uppercut = 3.;
+
+	float p;
+
+	//cout << "Cut dE/dx > " << dedx_uppercut << " applied" << endl;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%500))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
+
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+
+			if(is_electron(TMath::Log10(p),particle->GetdEdx()))
+				continue;
+			
+			output_tree.AddParticle(particle->GetCharge(),
+					particle->GetBx(), particle->GetBy(),
+					particle->GetPx(), particle->GetPy(), particle->GetPz(),
+					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+		}
+		output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+	
+}
+
 int main(int argc, char** argv)
 {
 	TString cut_mode = argv[1];
@@ -365,6 +438,7 @@ int main(int argc, char** argv)
 			cout << "DEDX cut requires additional arguments: 1.energy, 2. system, 3.inputfile, 4.outputfile" << endl;
 			return 0;
 		}
-		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
+		//RunDedxCut(inputfile, outputfile, system, energy.Atoi());
+		RunDedxCut2(inputfile, outputfile);
 	}
 }
