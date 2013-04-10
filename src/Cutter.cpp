@@ -433,9 +433,16 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
+		/*
 		if(argc != 6)
 		{
 			cout << "DEDX cut requires additional arguments: 1.energy, 2. system, 3.inputfile, 4.outputfile" << endl;
+			return 0;
+		}
+		*/
+		if(argc != 4)
+		{
+			cout << "DEDX cut requires additional arguments: 1.inputfile, 2.outputfile" << endl;
 			return 0;
 		}
 		//RunDedxCut(inputfile, outputfile, system, energy.Atoi());
