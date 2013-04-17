@@ -360,6 +360,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 	input_tree->SetBranchAddress("event",&event);
 
 	const Long64_t treeNentries = input_tree->GetEntries();
+	Long_t particles_in = 0, particles_out = 0;
 	Long64_t ev;
 	UInt_t Npa;
 	UInt_t part;
@@ -380,6 +381,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 		Npa = event->GetNpa();
 		output_tree.BeginEvent();
 
+		particles_in += Npa;
 		for(part=0; part<Npa; part++)
 		{
 			particle = event->GetParticle(part);
@@ -387,6 +389,8 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 
 			if(is_electron(TMath::Log10(p),particle->GetdEdx()))
 				continue;
+
+			++particles_out;
 			
 			output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
@@ -399,16 +403,104 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 
 	output_tree.Close();
 	input_rootfile->Close();
-	
+
+	cout << "dEdx cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+}
+
+void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	Long_t particles_in = 0, particles_out = 0, events_out = 0;
+	UInt_t part, Npa;
+
+	Float_t p;
+	Bool_t event_cancelled;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%500))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+
+		Npa = event->GetNpa();
+
+		event_cancelled = false;
+		for(part=0; part<Npa; ++part)
+		{
+			particle = event->GetParticle(part);
+			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+			if((particle->isPositive()) && (p > energy - 3))
+			{
+				event_cancelled = true;
+				break;
+			}
+		}
+
+		particles_in+=Npa;
+
+		if(event_cancelled)
+			continue;
+
+		events_out++;
+		
+		output_tree.BeginEvent();
+
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			
+			output_tree.AddParticle(particle->GetCharge(),
+					particle->GetBx(), particle->GetBy(),
+					particle->GetPx(), particle->GetPy(), particle->GetPz(),
+					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+		}
+		output_tree.EndEvent();
+		particles_out+=Npa;
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+
+	cout << "Elastic cut summary\n------------" << endl
+		<< "Events before cut: " << treeNentries  << endl
+		<< "Events after cut: " << events_out << endl
+		<< "Cutted events: " << (treeNentries-events_out) << endl
+		<< "Ratio: " << ((Double_t)treeNentries/events_out) << "\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
 int main(int argc, char** argv)
 {
-	TString cut_mode = argv[1];
-	TString energy = argv[2];
-	TString system = argv[3];
-	TString inputfile = argv[4];
-	TString outputfile = argv[5];
+	if(argc <= 1)
+	{
+		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl;
+		return 0;
+	}
+
+	TString inputfile = argv[1];
+	TString outputfile = argv[2];
+	TString cut_mode = argv[3];
+	TString energy = argv[4];
+	TString system = argv[5];
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
@@ -421,31 +513,34 @@ int main(int argc, char** argv)
 	{
 		if(argc != 6)
 		{
-			cout << "PPM cut requires additional arguments: 1.energy, 2.system, 3.inputfile, 4.outputfile" << endl;
+			cout << "PPM cut requires additional arguments: 1.energy, 2.system" << endl;
 			return 0;
 		}
 		RunPPMCut(inputfile, outputfile, system, energy);
 	}
 	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
-		mult_string = argv[2];
+		mult_string = argv[4];
 		RunMultSplit(mult_string);
 	}
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
-		/*
 		if(argc != 6)
 		{
-			cout << "DEDX cut requires additional arguments: 1.energy, 2. system, 3.inputfile, 4.outputfile" << endl;
-			return 0;
-		}
-		*/
-		if(argc != 4)
-		{
-			cout << "DEDX cut requires additional arguments: 1.inputfile, 2.outputfile" << endl;
+			cout << "DEDX cut requires additional arguments: 1.energy, 2. system" << endl;
 			return 0;
 		}
 		//RunDedxCut(inputfile, outputfile, system, energy.Atoi());
 		RunDedxCut2(inputfile, outputfile);
+	}
+	else if(!(cut_mode.CompareTo("ELASTIC")))
+	{
+		if(argc != 5)
+		{
+			cout << "ELASTIC cut requires additional argument: energy" << endl;
+			return 0;
+		}
+		cout << "Elastic cut mode" << endl;
+		RunElasticCut(inputfile,outputfile, energy.Atoi());
 	}
 }
