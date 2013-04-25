@@ -333,7 +333,7 @@ Bool_t is_electron(double logP, double dEdx) {
 	static const double a1 = 0.108696;
 	static const double b1 = 1.358696;
 	static const double a2 = -0.152174;
-	static const double b2 = 1.747826;
+	static const double b2 = 1.88;
 
 	//cout << "logP=" << logP << " dedx=" << dEdx << endl;
 
