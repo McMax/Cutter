@@ -333,11 +333,13 @@ Bool_t is_electron(double logP, double dEdx) {
 	static const double a1 = 0.108696;
 	static const double b1 = 1.358696;
 	static const double a2 = -0.152174;
-	static const double b2 = 1.88;
+	//static const double b2 = 1.88;
+	static const double b2 = 1.95;
+	//static const double b2 = 2;
 
-	//cout << "logP=" << logP << " dedx=" << dEdx << endl;
-
-	if((logP > -2) && (logP < 2))
+	if((logP >= 0.2) && (dEdx > 1.78))
+		return kTRUE;
+	else if((logP > -2) && (logP < 2))
 	{
 		if((dEdx > a1*logP + b1) && (dEdx < a2*logP + b2))
 			return kTRUE;
