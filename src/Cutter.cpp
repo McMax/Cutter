@@ -128,17 +128,17 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 	input_rootfile->Close();
 }
 
-void RunMultSplit(const TString mult_string)
+void RunMultSplit(TString inputfile, TString outputfile, const TString mult_string)
 {
 	cout << "Running multiplicity splitter mode" << endl;
 	const UInt_t multiplicity = atoi(mult_string);
 
-	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
-	ParticleTree output_tree_all("ParticleTree_mult" + mult_string + "_all.root");
-	ParticleTree output_tree_pos("ParticleTree_mult" + mult_string + "_pos.root");
-	ParticleTree output_tree_neg("ParticleTree_mult" + mult_string + "_neg.root");
+	ParticleTree output_tree_all(outputfile + "_all.root");
+	ParticleTree output_tree_pos(outputfile + "_pos.root");
+	ParticleTree output_tree_neg(outputfile + "_neg.root");
 
 	Event *event = new Event();
 	Particle *particle;
@@ -523,7 +523,7 @@ int main(int argc, char** argv)
 	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
 		mult_string = argv[4];
-		RunMultSplit(mult_string);
+		RunMultSplit(inputfile, outputfile, mult_string);
 	}
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
