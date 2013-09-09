@@ -91,10 +91,13 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 	Long64_t ev;
 	UInt_t Npa;
 	UInt_t part;
+	UInt_t particles_in, particles_out;
 
 	PPMCut partpopmatrix("PartPopMatrix.root",system, energy);
 
 	float pt, p, angle;
+
+	particles_in = particles_out = 0;
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
@@ -105,6 +108,8 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 			Npa = event->GetNpa();
 			output_tree.BeginEvent();
 
+			particles_in += Npa;
+
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
@@ -114,11 +119,15 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 
 				//CIECIE NA AKCEPTACJE
 				if(partpopmatrix.PartPopMatrixCut(particle->GetCharge(),p,pt,angle))
+				{
 					output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
 					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+
+					particles_out++;
+				}
 			}
 
 			output_tree.EndEvent();
@@ -126,6 +135,12 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 
 	output_tree.Close();
 	input_rootfile->Close();
+
+	cout << "Particle population matrix cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
 void RunMultSplit(TString inputfile, TString outputfile, const TString mult_string)
