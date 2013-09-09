@@ -244,7 +244,9 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 	input_rootfile->Close();
 }
 
+<<<<<<< HEAD
 Float_t choose_dedx(Particle *particle, TString system)
+>>>>>>> master
 {
 	static Int_t vtpc1_part;
 	static Int_t vtpc2_part;
@@ -507,6 +509,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 
 int main(int argc, char** argv)
 {
+<<<<<<< HEAD
 	if(argc <= 1)
 	{
 		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl;
@@ -518,6 +521,7 @@ int main(int argc, char** argv)
 	TString cut_mode = argv[3];
 	TString energy = argv[4];
 	TString system = argv[5];
+>>>>>>> master
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
@@ -537,6 +541,7 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
+<<<<<<< HEAD
 		mult_string = argv[4];
 		RunMultSplit(inputfile, outputfile, mult_string);
 	}
@@ -559,5 +564,6 @@ int main(int argc, char** argv)
 		}
 		cout << "Elastic cut mode" << endl;
 		RunElasticCut(inputfile,outputfile, energy.Atoi());
+>>>>>>> master
 	}
 }
