@@ -1,9 +1,11 @@
 #include <iostream>
+#include <algorithm> //fill_n
 #include <string>
 #include <cstdlib>
 
 #include "TMath.h"
 #include "TCutG.h"
+#include "TVector2.h"
 
 #include "ParticleTree.h"
 #include "Event.h"
@@ -101,7 +103,7 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
-		if(!(ev%5000))
+		if(!(ev%50))
 			cout << "Event: " << ev << endl;
 
 			input_tree->GetEntry(ev);
@@ -505,6 +507,170 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
+int RunTTRCut(TString inputfile, TString outputfile)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particleA, *particleB;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	Long_t particles_in = 0, particles_out = 0;
+	UInt_t partA, partB, Npa, count;
+
+	Float_t distance_sum;
+
+	TVector2 trackA, trackB, mov;
+	Bool_t track_ok;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%500))
+			cout << "Event: " << ev << " " << event->GetNpa() << " particles" << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+
+		Bool_t ttr_flags[Npa];
+		fill_n(ttr_flags,Npa,true);
+		
+		output_tree.BeginEvent();
+
+		for(partA=0; partA<Npa; partA++)
+		{
+			++particles_in;
+			if(!ttr_flags[partA])
+			{
+				//cout << "Ev: " << ev << " part: " << partA << " skipped" << endl;
+				continue;
+			}
+
+			track_ok = true;
+			particleA = event->GetParticle(partA);
+
+			for(partB=partA+1; partB<Npa; ++partB)
+			{
+				if(!ttr_flags[partB])
+				{
+					//cout << "Ev: " << ev << " part: " << partB << " skipped" << endl;
+					continue;
+				}
+
+				count = 0;
+				distance_sum = 0;
+				particleB = event->GetParticle(partB);
+
+				//VTPC1 start
+				if((particleA->GetVTPC1_Sx()!=9999) && (particleB->GetVTPC1_Sx()!=9999))
+				{
+					trackA.Set(particleA->GetVTPC1_Sx(),particleA->GetVTPC1_Sy());
+					trackB.Set(particleB->GetVTPC1_Sx(),particleB->GetVTPC1_Sy());
+					mov = trackB - trackA;
+					distance_sum += mov.Mod();
+					//cout << "VTPC1 start. Distance: " << mov.Mod() << endl;
+					++count;
+				}
+
+				//VTPC1 end
+				if((particleA->GetVTPC1_Ex()!=9999) && (particleB->GetVTPC1_Ex()!=9999))
+				{
+					trackA.Set(particleA->GetVTPC1_Ex(),particleA->GetVTPC1_Sy());
+					trackB.Set(particleB->GetVTPC1_Ex(),particleB->GetVTPC1_Sy());
+					mov = trackB - trackA;
+					distance_sum += mov.Mod();
+					//cout << "VTPC1 end. Distance: " << mov.Mod() << endl;
+					++count;
+				}
+
+				//VTPC2 start
+				if((particleA->GetVTPC2_Sx()!=9999) && (particleB->GetVTPC2_Sx()!=9999))
+				{
+					trackA.Set(particleA->GetVTPC2_Sx(),particleA->GetVTPC2_Sy());
+					trackB.Set(particleB->GetVTPC2_Sx(),particleB->GetVTPC2_Sy());
+					mov = trackB - trackA;
+					distance_sum += mov.Mod();
+					//cout << "VTPC2 start. Distance: " << mov.Mod() << endl;
+					++count;
+				}
+
+				//VTPC2 end
+				if((particleA->GetVTPC2_Ex()!=9999) && (particleB->GetVTPC2_Ex()!=9999))
+				{
+					trackA.Set(particleA->GetVTPC2_Ex(),particleA->GetVTPC2_Sy());
+					trackB.Set(particleB->GetVTPC2_Ex(),particleB->GetVTPC2_Sy());
+					mov = trackB - trackA;
+					distance_sum += mov.Mod();
+					//cout << "VTPC2 end. Distance: " << mov.Mod() << endl;
+					++count;
+				}
+
+				//MTPC start
+				if((particleA->GetMTPC_Sx()!=9999) && (particleB->GetMTPC_Sx()!=9999))
+				{
+					trackA.Set(particleA->GetMTPC_Sx(),particleA->GetMTPC_Sy());
+					trackB.Set(particleB->GetMTPC_Sx(),particleB->GetMTPC_Sy());
+					mov = trackB - trackA;
+					distance_sum += mov.Mod();
+					//cout << "MTPC start. Distance: " << mov.Mod() << endl;
+					++count;
+				}
+
+				//MTPC end
+				if((particleA->GetMTPC_Ex()!=9999) && (particleB->GetMTPC_Ex()!=9999))
+				{
+					trackA.Set(particleA->GetMTPC_Ex(),particleA->GetMTPC_Sy());
+					trackB.Set(particleB->GetMTPC_Ex(),particleB->GetMTPC_Sy());
+					mov = trackB - trackA;
+					distance_sum += mov.Mod();
+					//cout << "MTPC end. Distance: " << mov.Mod() << endl;
+					++count;
+				}
+
+				if(count==0)
+					continue;
+
+				distance_sum = distance_sum/count;
+				//cout << "Average: " << distance_sum << endl;
+
+				if(distance_sum < 1.6)
+				{
+					track_ok = false;
+					ttr_flags[partB] = false;
+					//cout << "Ev: " << ev << " particles " << partA << " and " << partB << " will be cut" << endl;
+					//cout << "Average: " << distance_sum << endl;
+					break;
+				}
+			}
+
+			if(track_ok)
+			{
+				//trackA accepted
+				++particles_out;
+				output_tree.AddParticle(*particleA);
+			}
+		}
+
+		output_tree.EndEvent();
+	}
+
+	input_rootfile->Close();
+	output_tree.Close();
+
+	cout << "TTR cut summary\n------------" << endl
+		<< "Events: " << treeNentries << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << particles_in-particles_out << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+
+	return particles_out;
+}
+
 int main(int argc, char** argv)
 {
 	if(argc <= 1)
@@ -559,5 +725,10 @@ int main(int argc, char** argv)
 		}
 		cout << "Elastic cut mode" << endl;
 		RunElasticCut(inputfile,outputfile, energy.Atoi());
+	}
+	else if(!(cut_mode.CompareTo("TTR")))
+	{
+		cout << "Two-track resolution mode" << endl;
+		RunTTRCut(inputfile,outputfile);
 	}
 }
