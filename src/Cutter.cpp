@@ -276,6 +276,11 @@ Float_t choose_dedx(Particle *particle, TString system)
 				return (particle->GetdEdxVtpc1());
 		}
 	}
+	else
+	{
+		std::cout << "Unrecognized particle system" << std::endl;
+		return 0;
+	}
 }
 
 void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t energy)
@@ -384,7 +389,6 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 	UInt_t Npa;
 	UInt_t part;
 
-	Float_t local_dedx;
 	//Float_t dedx_uppercut = 3.;
 
 	float p;
@@ -642,7 +646,7 @@ int RunTTRCut(TString inputfile, TString outputfile)
 					track_ok = false;
 					ttr_flags[partB] = false;
 					//cout << "Ev: " << ev << " particles " << partA << " and " << partB << " will be cut" << endl;
-					//cout << "Average: " << distance_sum << endl;
+					cerr << "Average: " << distance_sum << endl;
 					break;
 				}
 			}

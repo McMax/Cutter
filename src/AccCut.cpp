@@ -46,10 +46,8 @@ bool AccCut::acceptanceCut(const double p_x, const double pt, const int ch, cons
 {
 	if(ch<0)
 		result = acc_map_neg->GetBinContent(acc_map_neg->FindBin(y,(angle*180/TMath::Pi()),pt));
-	
 	else if(ch>0)
 		result = acc_map_pos->GetBinContent(acc_map_pos->FindBin(y,(angle*180/TMath::Pi()),pt));
-		
 	else
 		std::cout << "WTF? Charge:" << ch << std::endl;
 
@@ -61,5 +59,8 @@ bool AccCut::acceptanceCut(const double p_x, const double pt, const int ch, cons
 		return false;
 	}
 	else
+	{
 		std::cout << "WTF? Result: " << result << std::endl;
+		return false;
+	}
 }
