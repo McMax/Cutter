@@ -5,7 +5,6 @@
 
 #include "TMath.h"
 #include "TCutG.h"
-#include "TVector2.h"
 
 #include "ParticleTree.h"
 #include "Event.h"
@@ -13,6 +12,7 @@
 #include "AccCut.h"
 #include "dEdxCut.h"
 #include "PPMCut.h"
+#include "TTRCut.h"
 
 using namespace std;
 
@@ -513,6 +513,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 
 int RunTTRCut(TString inputfile, TString outputfile)
 {
+	TTRCut ttrcut;
 	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
@@ -525,11 +526,9 @@ int RunTTRCut(TString inputfile, TString outputfile)
 	const Long64_t treeNentries = input_tree->GetEntries();
 	Long64_t ev;
 	Long_t particles_in = 0, particles_out = 0;
-	UInt_t partA, partB, Npa, count;
+	UInt_t partA, partB, Npa;
 
-	Float_t distance_sum;
-
-	TVector2 trackA, trackB, mov;
+	Float_t distance_av;
 	Bool_t track_ok;
 
 	for(ev=0; ev<treeNentries; ++ev)
@@ -565,88 +564,18 @@ int RunTTRCut(TString inputfile, TString outputfile)
 					continue;
 				}
 
-				count = 0;
-				distance_sum = 0;
 				particleB = event->GetParticle(partB);
 
-				//VTPC1 start
-				if((particleA->GetVTPC1_Sx()!=9999) && (particleB->GetVTPC1_Sx()!=9999))
-				{
-					trackA.Set(particleA->GetVTPC1_Sx(),particleA->GetVTPC1_Sy());
-					trackB.Set(particleB->GetVTPC1_Sx(),particleB->GetVTPC1_Sy());
-					mov = trackB - trackA;
-					distance_sum += mov.Mod();
-					//cout << "VTPC1 start. Distance: " << mov.Mod() << endl;
-					++count;
-				}
-
-				//VTPC1 end
-				if((particleA->GetVTPC1_Ex()!=9999) && (particleB->GetVTPC1_Ex()!=9999))
-				{
-					trackA.Set(particleA->GetVTPC1_Ex(),particleA->GetVTPC1_Sy());
-					trackB.Set(particleB->GetVTPC1_Ex(),particleB->GetVTPC1_Sy());
-					mov = trackB - trackA;
-					distance_sum += mov.Mod();
-					//cout << "VTPC1 end. Distance: " << mov.Mod() << endl;
-					++count;
-				}
-
-				//VTPC2 start
-				if((particleA->GetVTPC2_Sx()!=9999) && (particleB->GetVTPC2_Sx()!=9999))
-				{
-					trackA.Set(particleA->GetVTPC2_Sx(),particleA->GetVTPC2_Sy());
-					trackB.Set(particleB->GetVTPC2_Sx(),particleB->GetVTPC2_Sy());
-					mov = trackB - trackA;
-					distance_sum += mov.Mod();
-					//cout << "VTPC2 start. Distance: " << mov.Mod() << endl;
-					++count;
-				}
-
-				//VTPC2 end
-				if((particleA->GetVTPC2_Ex()!=9999) && (particleB->GetVTPC2_Ex()!=9999))
-				{
-					trackA.Set(particleA->GetVTPC2_Ex(),particleA->GetVTPC2_Sy());
-					trackB.Set(particleB->GetVTPC2_Ex(),particleB->GetVTPC2_Sy());
-					mov = trackB - trackA;
-					distance_sum += mov.Mod();
-					//cout << "VTPC2 end. Distance: " << mov.Mod() << endl;
-					++count;
-				}
-
-				//MTPC start
-				if((particleA->GetMTPC_Sx()!=9999) && (particleB->GetMTPC_Sx()!=9999))
-				{
-					trackA.Set(particleA->GetMTPC_Sx(),particleA->GetMTPC_Sy());
-					trackB.Set(particleB->GetMTPC_Sx(),particleB->GetMTPC_Sy());
-					mov = trackB - trackA;
-					distance_sum += mov.Mod();
-					//cout << "MTPC start. Distance: " << mov.Mod() << endl;
-					++count;
-				}
-
-				//MTPC end
-				if((particleA->GetMTPC_Ex()!=9999) && (particleB->GetMTPC_Ex()!=9999))
-				{
-					trackA.Set(particleA->GetMTPC_Ex(),particleA->GetMTPC_Sy());
-					trackB.Set(particleB->GetMTPC_Ex(),particleB->GetMTPC_Sy());
-					mov = trackB - trackA;
-					distance_sum += mov.Mod();
-					//cout << "MTPC end. Distance: " << mov.Mod() << endl;
-					++count;
-				}
-
-				if(count==0)
-					continue;
-
-				distance_sum = distance_sum/count;
-				//cout << "Average: " << distance_sum << endl;
-
-				if(distance_sum < 1.6)
+				///////////////////
+				distance_av = ttrcut.calcAvDistance(particleA,particleB);
+				//////////////////
+				
+				if(distance_av < 1.6)
 				{
 					track_ok = false;
 					ttr_flags[partB] = false;
 					//cout << "Ev: " << ev << " particles " << partA << " and " << partB << " will be cut" << endl;
-					cerr << "Average: " << distance_sum << endl;
+					//cerr << "Average: " << distance_av << endl;
 					break;
 				}
 			}
@@ -658,7 +587,8 @@ int RunTTRCut(TString inputfile, TString outputfile)
 				output_tree.AddParticle(*particleA);
 			}
 		}
-
+		
+		//cerr << "Event: " << ev << " | Cutted " << (Npa-output_tree.Check()) << " particles" << endl;
 		output_tree.EndEvent();
 	}
 
