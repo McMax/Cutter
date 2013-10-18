@@ -21,20 +21,13 @@ void AccCut::openMapFile(const TString filename, const int energy)
 	acc_map_file = new TFile(filename, "READ");	
 
 	if(acc_map_file->IsZombie())
-		std::cout << "File " << filename << " not opened" << std::endl;
+		std::cerr << "File " << filename << " not opened" << std::endl;
 	temp = "";
 	temp += energy;
-	temp += "/pos";
 
-	//std::cout << "pos: " << temp << std::endl;
+	//std::cerr << "Opening map: " << temp << std::endl;
 	
-	acc_map_pos = (TH3C*)acc_map_file->Get(temp);
-
-	temp = "";
-	temp += energy;
-	temp += "/neg";
-	//std::cout << "neg: " << temp << std::endl;
-	acc_map_neg = (TH3C*)acc_map_file->Get(temp);
+	acc_map = (TH3C*)acc_map_file->Get(temp);
 }
 
 void AccCut::closeMapFile()
@@ -42,16 +35,19 @@ void AccCut::closeMapFile()
 	acc_map_file->Close();
 }
 
-bool AccCut::acceptanceCut(const double p_x, const double pt, const int ch, const double y, double angle)
+bool AccCut::acceptanceCut(const int ch, const double y_pi_cms, const double angle_rad, const double pt)
 {
+	angle_deg = angle_rad*180/TMath::Pi();
+
 	if(ch<0)
-		result = acc_map_neg->GetBinContent(acc_map_neg->FindBin(y,(angle*180/TMath::Pi()),pt));
-	
-	else if(ch>0)
-		result = acc_map_pos->GetBinContent(acc_map_pos->FindBin(y,(angle*180/TMath::Pi()),pt));
-		
-	else
-		std::cout << "WTF? Charge:" << ch << std::endl;
+		if(angle_deg < 0)
+			angle_deg = -180 - angle_deg;
+		else
+			angle_deg = 180 - angle_deg;
+
+	result = acc_map->GetBinContent(acc_map->FindBin(y_pi_cms,angle_deg,pt));
+
+	//std::cerr << "y=" << y_pi_cms << " angle=" << angle_deg << " pT=" << pt << " result: " << result << std::endl;
 
 	if(result==1.)
 		return true;

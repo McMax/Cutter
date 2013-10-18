@@ -14,7 +14,7 @@
 
 using namespace std;
 
-void RunAccCut(const int ener)
+void RunAccCut(const TString inputfile, const TString outputfile, const int ener)
 {
 	cout << "Running acceptance mode" << endl;
 
@@ -32,7 +32,7 @@ void RunAccCut(const int ener)
 	UInt_t Npa;
 	UInt_t part;
 
-	AccCut acc_map("acceptance-map-medium.root",ener);
+	AccCut acc_map("acceptance-map.root",ener);
 
 	float pt, E, p, y, angle;
 	const float pion_mass = 0.13957018; //GeV/c^2
@@ -59,7 +59,7 @@ void RunAccCut(const int ener)
 				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
 
 				//CIECIE NA AKCEPTACJE
-				if(acc_map.acceptanceCut(particle->GetPx(),pt,particle->GetCharge(),y,angle))
+				if(acc_map.acceptanceCut(particle->GetCharge(),y,angle,pt))
 					output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
@@ -244,9 +244,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 	input_rootfile->Close();
 }
 
-<<<<<<< HEAD
 Float_t choose_dedx(Particle *particle, TString system)
->>>>>>> master
 {
 	static Int_t vtpc1_part;
 	static Int_t vtpc2_part;
@@ -509,7 +507,6 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 
 int main(int argc, char** argv)
 {
-<<<<<<< HEAD
 	if(argc <= 1)
 	{
 		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl;
@@ -521,14 +518,18 @@ int main(int argc, char** argv)
 	TString cut_mode = argv[3];
 	TString energy = argv[4];
 	TString system = argv[5];
->>>>>>> master
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
-	if(!(cut_mode.CompareTo("NA61ACC")))
+	if(!(cut_mode.CompareTo("ACC")))
 	{
-		cout << "WARNING: Energy fixed to 158 GeV!" << endl;
-		RunAccCut(158);
+		if(argc != 5)
+		{
+			cout << "ACC cut requires additional argument: energy" << endl;
+			return 0;
+		}
+
+		RunAccCut(inputfile, outputfile, energy.Atoi());
 	}
 	else if(!(cut_mode.CompareTo("PPM")))
 	{
@@ -541,7 +542,6 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
-<<<<<<< HEAD
 		mult_string = argv[4];
 		RunMultSplit(inputfile, outputfile, mult_string);
 	}
@@ -564,6 +564,5 @@ int main(int argc, char** argv)
 		}
 		cout << "Elastic cut mode" << endl;
 		RunElasticCut(inputfile,outputfile, energy.Atoi());
->>>>>>> master
 	}
 }
