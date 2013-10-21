@@ -40,10 +40,12 @@ bool AccCut::acceptanceCut(const int ch, const double y_pi_cms, const double ang
 	angle_deg = angle_rad*180/TMath::Pi();
 
 	if(ch<0)
+	{
 		if(angle_deg < 0)
 			angle_deg = -180 - angle_deg;
 		else
 			angle_deg = 180 - angle_deg;
+	}
 
 	result = acc_map->GetBinContent(acc_map->FindBin(y_pi_cms,angle_deg,pt));
 

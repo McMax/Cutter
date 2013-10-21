@@ -18,10 +18,10 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 {
 	cout << "Running acceptance mode" << endl;
 
-	TFile *input_rootfile = new TFile("ParticleTree.root");
+	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
-	ParticleTree output_tree("ParticleTree_acc.root");
+	ParticleTree output_tree(outputfile);
 
 	Event *event = new Event();
 	Particle *particle;
