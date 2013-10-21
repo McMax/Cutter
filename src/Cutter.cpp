@@ -511,7 +511,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
-int RunTTRCut(TString inputfile, TString outputfile)
+int RunTTRCut(TString inputfile, TString outputfile, double distance=1.6)
 {
 	TTRCut ttrcut;
 	TFile *input_rootfile = new TFile(inputfile);
@@ -530,6 +530,7 @@ int RunTTRCut(TString inputfile, TString outputfile)
 
 	Float_t distance_av;
 	Bool_t track_ok;
+	cout << "distance in function: " << distance << endl;
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
@@ -570,7 +571,7 @@ int RunTTRCut(TString inputfile, TString outputfile)
 				distance_av = ttrcut.calcAvDistance(particleA,particleB);
 				//////////////////
 				
-				if(distance_av < 1.6)
+				if(distance_av < distance)
 				{
 					track_ok = false;
 					ttr_flags[partB] = false;
@@ -618,6 +619,7 @@ int main(int argc, char** argv)
 	TString cut_mode = argv[3];
 	TString energy = argv[4];
 	TString system = argv[5];
+	TString ttr_distance = argv[4];
 	TString mult_string;
 
 	cout << "cut mode:" << cut_mode << endl;
@@ -663,6 +665,15 @@ int main(int argc, char** argv)
 	else if(!(cut_mode.CompareTo("TTR")))
 	{
 		cout << "Two-track resolution mode" << endl;
-		RunTTRCut(inputfile,outputfile);
+		if(argc == 5)
+		{
+			cout << "\tRunning with cut distance " << ttr_distance << " cm" << endl;
+			RunTTRCut(inputfile,outputfile,ttr_distance.Atoi());
+		}
+		else
+		{
+			cout << "\tRunning with default cut distance" << endl;
+			RunTTRCut(inputfile,outputfile);
+		}
 	}
 }
