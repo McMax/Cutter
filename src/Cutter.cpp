@@ -274,6 +274,8 @@ Float_t choose_dedx(Particle *particle, TString system)
 				return (particle->GetdEdxVtpc1());
 		}
 	}
+	else
+		return -1;
 }
 
 void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t energy)
@@ -383,7 +385,6 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 	UInt_t Npa;
 	UInt_t part;
 
-	Float_t local_dedx;
 	//Float_t dedx_uppercut = 3.;
 
 	float p;
@@ -506,6 +507,64 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
+void RunPtCut(TString inputfile, TString outputfile)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long_t particles_in = 0, particles_out = 0;
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	Double_t pt;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%1000))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
+
+		particles_in += Npa;
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+
+			if(pt > 1.5)
+				continue;
+
+			++particles_out;
+			
+			output_tree.AddParticle(particle->GetCharge(),
+					particle->GetBx(), particle->GetBy(),
+					particle->GetPx(), particle->GetPy(), particle->GetPz(),
+					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+		}
+		output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+
+	cout << "pT cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+}
+
 int main(int argc, char** argv)
 {
 	if(argc <= 1)
@@ -566,4 +625,9 @@ int main(int argc, char** argv)
 		cout << "Elastic cut mode" << endl;
 		RunElasticCut(inputfile,outputfile, energy.Atoi());
 	}
-}
+	else if(!(cut_mode.CompareTo("PT")))
+	{
+		cout << "Transverse momentum cut mode: pt < 1.5 GeV/c" << endl;
+		RunPtCut(inputfile, outputfile);
+	}
+}		

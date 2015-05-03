@@ -59,5 +59,8 @@ bool AccCut::acceptanceCut(const int ch, const double y_pi_cms, const double ang
 		return false;
 	}
 	else
+	{
 		std::cout << "WTF? Result: " << result << std::endl;
+		return false;
+	}
 }
