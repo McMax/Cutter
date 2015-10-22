@@ -8,71 +8,10 @@
 #include "ParticleTree.h"
 #include "Event.h"
 #include "Particle.h"
-#include "AccCut.h"
 #include "dEdxCut.h"
 #include "PPMCut.h"
 
 using namespace std;
-
-void RunAccCut(const TString inputfile, const TString outputfile, const int ener)
-{
-	cout << "Running acceptance mode" << endl;
-
-	TFile *input_rootfile = new TFile(inputfile);
-	TTree* input_tree = (TTree*)input_rootfile->Get("events");
-
-	ParticleTree output_tree(outputfile);
-
-	Event *event = new Event();
-	Particle *particle;
-	input_tree->SetBranchAddress("event",&event);
-
-	const Long64_t treeNentries = input_tree->GetEntries();
-	Long64_t ev;
-	UInt_t Npa;
-	UInt_t part;
-
-	AccCut acc_map("acceptance-map.root",ener);
-
-	float pt, E, p, y, angle;
-	const float pion_mass = 0.13957018; //GeV/c^2
-	const float nucleon_mass = 0.9389186795; //GeV/c^2
-	const float beta = (ener/(ener+nucleon_mass));
-	const float y_cms = 0.5*TMath::Log((1+beta)/(1-beta));
-
-	for(ev=0; ev<treeNentries; ++ev)
-	{
-		if(!(ev%5000))
-			cout << "Event: " << ev << endl;
-
-			input_tree->GetEntry(ev);
-			Npa = event->GetNpa();
-			output_tree.BeginEvent();
-
-			for(part=0; part<Npa; part++)
-			{
-				particle = event->GetParticle(part);
-				pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
-				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
-				E = TMath::Sqrt(pion_mass*pion_mass+p*p);
-				y = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz())) - y_cms;
-				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
-
-				//CIECIE NA AKCEPTACJE
-				if(acc_map.acceptanceCut(particle->GetCharge(),y,angle,pt))
-					output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
-			}
-
-			output_tree.EndEvent();
-	}
-
-	output_tree.Close();
-	input_rootfile->Close();
-}
 
 void RunPPMCut(TString inputfile, TString outputfile, TString system, TString energy)
 {
@@ -94,6 +33,11 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 	UInt_t particles_in, particles_out;
 
 	PPMCut partpopmatrix("PartPopMatrix.root",system, energy);
+	if(!(partpopmatrix.isPPMFileOpened()))
+	{
+		cout << "PPM file not opened" << endl;
+		return;
+	}
 
 	float pt, p, angle;
 
@@ -124,7 +68,7 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 
 					particles_out++;
 				}
@@ -192,7 +136,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
 						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 			}
 			++all_count;
 			output_tree_all.EndEvent();
@@ -210,7 +154,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
 						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 			}
 			++pos_count;
 			output_tree_pos.EndEvent();
@@ -228,7 +172,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
 						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 			}
 			++neg_count;
 			output_tree_neg.EndEvent();
@@ -337,7 +281,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 		}
 		output_tree.EndEvent();
 	}
@@ -415,7 +359,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 		}
 		output_tree.EndEvent();
 	}
@@ -487,7 +431,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 		}
 		output_tree.EndEvent();
 		particles_out+=Npa;
@@ -559,7 +503,7 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc(), particle->GetMass());
 		}
 		output_tree.EndEvent();
 	}
@@ -591,17 +535,8 @@ int main(int argc, char** argv)
 	TString pt_cut_string;
 
 	cout << "cut mode:" << cut_mode << endl;
-	if(!(cut_mode.CompareTo("ACC")))
-	{
-		if(argc != 5)
-		{
-			cout << "ACC cut requires additional argument: energy" << endl;
-			return 0;
-		}
 
-		RunAccCut(inputfile, outputfile, energy.Atoi());
-	}
-	else if(!(cut_mode.CompareTo("PPM")))
+	if(!(cut_mode.CompareTo("PPM")))
 	{
 		if(argc != 6)
 		{

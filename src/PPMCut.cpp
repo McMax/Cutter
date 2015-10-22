@@ -20,9 +20,6 @@ void PPMCut::openPPMFile(const TString filename, const TString system, const TSt
 
 	ppm_file = new TFile(filename, "READ");
 
-	if(ppm_file->IsZombie())
-		std::cout << "File " << filename << " not opened" << std::endl;
-
 	temp = system + "/" + energy + "/histPartPopMatrixPos";
 	std::cout << "Opening histogram " << temp << std::endl;
 	partpopmatrix_pos = (TH3I*)ppm_file->Get(system+"/"+energy+"/histPartPopMatrixPos");
@@ -32,6 +29,14 @@ void PPMCut::openPPMFile(const TString filename, const TString system, const TSt
 void PPMCut::closePPMFile()
 {
 	ppm_file->Close();
+}
+
+int PPMCut::isPPMFileOpened()
+{
+	if(!(ppm_file->IsOpen()))
+		return 0;
+	else
+		return 1;
 }
 
 bool PPMCut::PartPopMatrixCut(const int ch, const double p, const double pt, const double angle)
@@ -51,7 +56,7 @@ bool PPMCut::PartPopMatrixCut(const int ch, const double p, const double pt, con
 	}
 	else if(result < 0)
 	{
-		//std::cout << "Bin should not has bin content < 0" << std::endl;
+		std::cout << "Bin should not has bin content < 0" << std::endl;
 		return false;
 	}
 	else

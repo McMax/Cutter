@@ -19,4 +19,5 @@ public:
 
 	void openPPMFile(const TString, const TString, const TString);
 	void closePPMFile();
+	int isPPMFileOpened();
 };
