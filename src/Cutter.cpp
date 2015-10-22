@@ -145,7 +145,7 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 
 void RunMultSplit(TString inputfile, TString outputfile, const TString mult_string)
 {
-	cout << "Running multiplicity splitter mode" << endl;
+	cout << "Running multiplicity splitter (" << mult_string << ") mode" << endl;
 	const UInt_t multiplicity = atoi(mult_string);
 
 	TFile *input_rootfile = new TFile(inputfile);
@@ -174,7 +174,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 	//DLA WSZYSTKICH
 	for(ev=0; ev<treeNentries; ++ev)
 	{
-		if(!(ev%5000))
+		if(!(ev%10000))
 			cout << "Event: " << ev << endl;
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
@@ -204,7 +204,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				if((particle->GetCharge())>0)
+				//if((particle->GetCharge())>0)		//oops
 					//output_tree_pos.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 				output_tree_pos.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
@@ -222,7 +222,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				if((particle->GetCharge())<0)
+				//if((particle->GetCharge())<0)		//oops
 					//output_tree_neg.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 				output_tree_neg.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
@@ -507,7 +507,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
-void RunPtCut(TString inputfile, TString outputfile)
+void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 {
 	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
@@ -541,8 +541,17 @@ void RunPtCut(TString inputfile, TString outputfile)
 			particle = event->GetParticle(part);
 			pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
 
-			if(pt > 1.5)
-				continue;
+			if(ptcut >= 0)
+			{
+				if(pt > ptcut)
+					continue;
+			}
+			else if(ptcut < 0)
+			{
+				if(pt < TMath::Abs(ptcut))
+					continue;
+			}
+			
 
 			++particles_out;
 			
@@ -579,6 +588,7 @@ int main(int argc, char** argv)
 	TString energy = argv[4];
 	TString system = argv[5];
 	TString mult_string;
+	TString pt_cut_string;
 
 	cout << "cut mode:" << cut_mode << endl;
 	if(!(cut_mode.CompareTo("ACC")))
@@ -627,7 +637,16 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("PT")))
 	{
-		cout << "Transverse momentum cut mode: pt < 1.5 GeV/c" << endl;
-		RunPtCut(inputfile, outputfile);
+		if(argc == 5)
+		{
+			pt_cut_string = argv[4];
+			cout << "Transverse momentum cut mode: pt < " << pt_cut_string << " GeV/c" << endl;
+			RunPtCut(inputfile, outputfile, pt_cut_string.Atof());
+		}
+		else 
+		{
+			cout << "Transverse momentum cut mode: pt < 1.5 GeV/c" << endl;
+			RunPtCut(inputfile, outputfile);	//default 1.5 GeV
+		}
 	}
 }		
