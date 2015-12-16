@@ -14,13 +14,16 @@
 
 using namespace std;
 
+//Acceptance map cut
 void RunAccCut(const TString inputfile, const TString outputfile, const int ener)
 {
 	cout << "Running acceptance mode" << endl;
 
+//Input ParticleTree file
 	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
+//Output ParticleTree file
 	ParticleTree output_tree(outputfile);
 
 	Event *event = new Event();
@@ -32,6 +35,7 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 	UInt_t Npa;
 	UInt_t part;
 
+//File with acceptance map definitions is needed. The file name is hard-coded.
 	AccCut acc_map("acceptance-map.root",ener);
 
 	float pt, E, p, y, angle;
@@ -58,7 +62,6 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 				y = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz())) - y_cms;
 				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
 
-				//CIECIE NA AKCEPTACJE
 				if(acc_map.acceptanceCut(particle->GetCharge(),y,angle,pt))
 					output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
@@ -73,7 +76,9 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 	output_tree.Close();
 	input_rootfile->Close();
 }
+//Acceptance map cut
 
+//Particle Population Matrix cut
 void RunPPMCut(TString inputfile, TString outputfile, TString system, TString energy)
 {
 	cout << "Running particle population matrix mode" << endl;
@@ -93,6 +98,7 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 	UInt_t part;
 	UInt_t particles_in, particles_out;
 
+//PPMCut class defined in PPMCut.h
 	PPMCut partpopmatrix("PartPopMatrix.root",system, energy);
 
 	float pt, p, angle;
@@ -117,7 +123,7 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
 
-				//CIECIE NA AKCEPTACJE
+//The cut itself
 				if(partpopmatrix.PartPopMatrixCut(particle->GetCharge(),p,pt,angle))
 				{
 					output_tree.AddParticle(particle->GetCharge(),
@@ -142,7 +148,9 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
+//Particle Population Matrix cut
 
+//Multiplicity splitter to multiplicity bins analysis
 void RunMultSplit(TString inputfile, TString outputfile, const TString mult_string)
 {
 	cout << "Running multiplicity splitter (" << mult_string << ") mode" << endl;
@@ -151,6 +159,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
 
+//Three output files of all, positively and negatively charged particles
 	ParticleTree output_tree_all(outputfile + "_all.root");
 	ParticleTree output_tree_pos(outputfile + "_pos.root");
 	ParticleTree output_tree_neg(outputfile + "_neg.root");
@@ -171,7 +180,6 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 	
 	//cout << "Event\t\tAll\tPos\tNeg" << endl;
 
-	//DLA WSZYSTKICH
 	for(ev=0; ev<treeNentries; ++ev)
 	{
 		if(!(ev%10000))
@@ -187,7 +195,6 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				//output_tree_all.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 				output_tree_all.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
@@ -204,8 +211,6 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				//if((particle->GetCharge())>0)		//oops
-					//output_tree_pos.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 				output_tree_pos.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
@@ -222,8 +227,6 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				//if((particle->GetCharge())<0)		//oops
-					//output_tree_neg.AddParticle(particle->GetPid(), particle->GetCharge(), particle->GetBx(), particle->GetBy(), particle->GetPx(), particle->GetPy(), particle->GetPz(), particle->GetDedx());
 				output_tree_neg.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
@@ -243,7 +246,10 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 	output_tree_neg.Close();
 	input_rootfile->Close();
 }
+//Multiplicity splitter to multiplicity bins analysis
 
+
+//Function needed to dEdx cut described below
 Float_t choose_dedx(Particle *particle, TString system)
 {
 	static Int_t vtpc1_part;
@@ -277,7 +283,9 @@ Float_t choose_dedx(Particle *particle, TString system)
 	else
 		return -1;
 }
+//Function needed to dEdx cut described below
 
+//dEdx cut based on graphical cut defined in dEdxCut.cpp
 void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t energy)
 {
 	cout << "Running dE/dx mode with energy " << energy << endl;
@@ -331,7 +339,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 				continue;
 
 			if(local_dedx > dedx_uppercut)
-				continue;		//dodatkowy cut 3.02.2013
+				continue;
 
 			output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
@@ -345,6 +353,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 	output_tree.Close();
 	input_rootfile->Close();
 }
+//dEdx cut
 
 Bool_t is_electron(double logP, double dEdx) {
 	static const double a1 = 0.108696;
@@ -368,6 +377,7 @@ Bool_t is_electron(double logP, double dEdx) {
 		return kFALSE;
 } 
 
+//dEdx cut based on parametrized curves defined in "is_electron" function
 void RunDedxCut2(TString inputfile, TString outputfile)
 {
 	TFile *input_rootfile = new TFile(inputfile);
@@ -430,6 +440,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
+//Elastic event cut. Not used due to its usage in preanalysis in LxPlus
 void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 {
 	TFile *input_rootfile = new TFile(inputfile);
@@ -506,7 +517,10 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
+//Elastic event cut
 
+//pT cut. Default value is 1.5 GeV/c. Which means it takes everything between 0 and 1.5.
+//For ptcut values lower than 0, the cut will take everything between abs(ptcut) and infinity.
 void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 {
 	TFile *input_rootfile = new TFile(inputfile);
@@ -573,6 +587,7 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
+//pT cut
 
 int main(int argc, char** argv)
 {

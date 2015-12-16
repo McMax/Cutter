@@ -4,6 +4,7 @@
 
 #include "dEdxCut.h"
 
+//Definitions of graphical cuts for all pp energies and 20/158 energies of PbPb
 TCutG* initialise_dedx_cutg(TString system, Int_t energy)
 {
 	TCutG *cutg = new TCutG();
