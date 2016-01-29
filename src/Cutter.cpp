@@ -319,6 +319,59 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
+void RunChargedCut(TString inputfile, TString outputfile)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long_t particles_in = 0, particles_out = 0;
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%1000))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
+
+		particles_in += Npa;
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+
+			if(particle->GetCharge() == 0)
+				continue;
+			
+			++particles_out;
+			
+			output_tree.AddParticle(particle->GetCharge(), particle->GetPDGpid(),
+					particle->GetPx(), particle->GetPy(), particle->GetPz(),
+					particle->GetMass());
+		}
+		output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+
+	cout << "CHARGED cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+}
+
 int main(int argc, char** argv)
 {
 	if(argc <= 1)
@@ -375,4 +428,14 @@ int main(int argc, char** argv)
 			RunPtCut(inputfile, outputfile);	//default 1.5 GeV
 		}
 	}
+	else if(!(cut_mode.CompareTo("CHARGED")))
+	{
+		if(argc == 4)
+		{
+			cout << "CHARGED cut" << endl;
+			RunChargedCut(inputfile, outputfile);
+		}
+	}
+
+	return 0;
 }		
