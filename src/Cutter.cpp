@@ -14,7 +14,7 @@
 
 using namespace std;
 
-void RunAccCut(const TString inputfile, const TString outputfile, const int ener)
+void RunAccCut(const TString inputfile, const TString outputfile, const int momentum)
 {
 	cout << "Running acceptance mode" << endl;
 
@@ -32,13 +32,17 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 	UInt_t Npa;
 	UInt_t part;
 
-	AccCut acc_map("acceptance-map.root",ener);
+	AccCut acc_map("acceptance-map.root",momentum);
 
 	float pt, E, p, y, angle;
 	const float pion_mass = 0.13957018; //GeV/c^2
 	const float nucleon_mass = 0.9389186795; //GeV/c^2
-	const float beta = (ener/(ener+nucleon_mass));
+	const float beta = momentum/(TMath::Sqrt(momentum*momentum+nucleon_mass*nucleon_mass)+nucleon_mass);
 	const float y_cms = 0.5*TMath::Log((1+beta)/(1-beta));
+	
+	cout << "beta = " << beta << endl << "y_cms=" << y_cms << endl;
+
+	UInt_t particles_in = 0, particles_out = 0;
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
@@ -51,6 +55,8 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 
 			for(part=0; part<Npa; part++)
 			{
+				++particles_in;
+
 				particle = event->GetParticle(part);
 				pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
 				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
@@ -60,11 +66,15 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 
 				//CIECIE NA AKCEPTACJE
 				if(acc_map.acceptanceCut(particle->GetCharge(),y,angle,pt))
+				{
 					output_tree.AddParticle(particle->GetCharge(),
 					particle->GetBx(), particle->GetBy(),
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
 					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+
+					++particles_out;
+				}
 			}
 
 			output_tree.EndEvent();
@@ -72,6 +82,12 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int ener
 
 	output_tree.Close();
 	input_rootfile->Close();
+
+	cout << "Acceptance map cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
 void RunPPMCut(TString inputfile, TString outputfile, TString system, TString energy)
