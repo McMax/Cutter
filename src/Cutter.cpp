@@ -462,7 +462,6 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
 
-//Elastic event cut. Not used due to its usage in preanalysis in LxPlus
 void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 {
 	TFile *input_rootfile = new TFile(inputfile);
@@ -480,7 +479,6 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 	UInt_t part, Npa;
 
 	Float_t p;
-	Bool_t event_cancelled;
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
@@ -488,26 +486,21 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 			cout << "Event: " << ev << endl;
 
 		input_tree->GetEntry(ev);
-
 		Npa = event->GetNpa();
 
-		event_cancelled = false;
-		for(part=0; part<Npa; ++part)
+		//If, after cuts before, we left only with one positively charged particle with momentum close to beam momentum, I assume that it is a proton from beam which interacted elastically with target. I reject this proton and therefore whole event.
+		if(Npa == 1)
 		{
-			particle = event->GetParticle(part);
+			particle = event->GetParticle(0);
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 			if((particle->isPositive()) && (p > energy - 3))
 			{
-				event_cancelled = true;
-				break;
+				particles_in++;
+				continue;
 			}
 		}
 
 		particles_in+=Npa;
-
-		if(event_cancelled)
-			continue;
-
 		events_out++;
 		
 		output_tree.BeginEvent();
@@ -533,7 +526,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Events before cut: " << treeNentries  << endl
 		<< "Events after cut: " << events_out << endl
 		<< "Cutted events: " << (treeNentries-events_out) << endl
-		<< "Ratio: " << ((Double_t)treeNentries/events_out) << "\n------------" << endl
+		<< "Ratio: " << ((Double_t)events_out/treeNentries) << "\n------------" << endl
 		<< "Particles before cut: " << particles_in << endl
 		<< "Particles after cut: " << particles_out << endl
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
