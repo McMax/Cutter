@@ -225,6 +225,10 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
+
+				if(!(particle->isPositive()))
+					continue;
+
 				output_tree_pos.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
@@ -241,6 +245,10 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
+
+				if(particle->isPositive())
+					continue;
+
 				output_tree_neg.AddParticle(particle->GetCharge(),
 						particle->GetBx(), particle->GetBy(),
 						particle->GetPx(), particle->GetPy(), particle->GetPz(),
