@@ -329,6 +329,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 	Long64_t ev;
 	UInt_t Npa;
 	UInt_t part;
+	UInt_t particles_in = 0, particles_out = 0;
 
 	Float_t local_dedx;
 	Float_t dedx_uppercut = 3.;
@@ -356,6 +357,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 
 		for(part=0; part<Npa; part++)
 		{
+			++particles_in;
 			particle = event->GetParticle(part);
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 			local_dedx = choose_dedx(particle, system);
@@ -370,9 +372,17 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 					particle->GetPx(), particle->GetPy(), particle->GetPz(),
 					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
 					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+
+			++particles_out;
 		}
 		output_tree.EndEvent();
 	}
+
+	cout << "dEdx cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 
 	output_tree.Close();
 	input_rootfile->Close();
