@@ -118,6 +118,31 @@ TCutG* initialise_dedx_cutg(TString system, Int_t energy)
 			}
 		}
 	}
+	else if(!(system.CompareTo("BeBe")))
+	{
+		switch(energy)
+		{
+			case 75:
+			{
+				cutg = new TCutG("dedx_cut",12);
+				cutg->SetTitle("e^{-} dE/dx cut for Be+Be @ 75 GeV/c");
+				cutg->SetFillColor(1);
+				cutg->SetPoint(0,0.284871,1.84884);
+				cutg->SetPoint(1,0.369055,1.36919);
+				cutg->SetPoint(2,0.705019,1.33804);
+				cutg->SetPoint(3,2.03808,1.38164);
+				cutg->SetPoint(4,5.38127,1.43148);
+				cutg->SetPoint(5,12.3227,1.55);
+				cutg->SetPoint(6,23.5404,1.62458);
+				cutg->SetPoint(7,8.14319,1.76786);
+				cutg->SetPoint(8,2.67477,1.89867);
+				cutg->SetPoint(9,0.974441,1.95473);
+				cutg->SetPoint(10,0.404061,1.96096);
+				cutg->SetPoint(11,0.284871,1.84884);
+				break;
+			}
+		}
+	}
 	else if(!(system.CompareTo("PbPb")))
 	{
 		switch(energy)

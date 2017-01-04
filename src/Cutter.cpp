@@ -606,9 +606,15 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 
 int main(int argc, char** argv)
 {
-	if(argc <= 1)
+	if(argc <= 3)
 	{
-		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl;
+		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl
+			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT" << endl
+			<< "ACC <energy>" << endl
+			<< "MULTSPLIT <n>" << endl
+			<< "DEDX <energy> <system>" << endl
+			<< "ELASTIC <energy>" << endl
+			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl;
 		return 0;
 	}
 
