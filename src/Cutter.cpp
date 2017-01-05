@@ -390,15 +390,16 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 //dEdx cut
 
 Bool_t is_electron(double logP, double dEdx) {
-	static const double a1 = 0.108696;
-	static const double b1 = 1.358696;
+	//static const double a1 = 0.108696;
+	//static const double b1 = 1.358696;
+	static const double a1 = 0.15;
+	static const double b1 = 1.2;
 	//static const double a2 = -0.152174;
 	static const double a2 = -0.1;
-	//static const double b2 = 1.88;
-	//static const double b2 = 1.95;
 	static const double b2 = 2;
 
-	if((logP >= 0.2) && (dEdx > 1.78))
+	//if((logP >= 0.2) && (dEdx > 1.78))
+	if(dEdx > 1.5)
 		return kTRUE;
 	else if((logP > -2) && (logP < 2.4))
 	{
@@ -670,8 +671,8 @@ int main(int argc, char** argv)
 			cout << "DEDX cut requires additional arguments: 1.energy, 2. system" << endl;
 			return 0;
 		}
-		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
-		//RunDedxCut2(inputfile, outputfile);
+		//RunDedxCut(inputfile, outputfile, system, energy.Atoi());
+		RunDedxCut2(inputfile, outputfile);
 	}
 	else if(!(cut_mode.CompareTo("ELASTIC")))
 	{
