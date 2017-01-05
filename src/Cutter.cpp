@@ -671,8 +671,8 @@ int main(int argc, char** argv)
 			cout << "DEDX cut requires additional arguments: 1.energy, 2. system" << endl;
 			return 0;
 		}
-		//RunDedxCut(inputfile, outputfile, system, energy.Atoi());
-		RunDedxCut2(inputfile, outputfile);
+		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
+		//RunDedxCut2(inputfile, outputfile);
 	}
 	else if(!(cut_mode.CompareTo("ELASTIC")))
 	{
