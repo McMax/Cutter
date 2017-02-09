@@ -250,7 +250,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 }
 //Multiplicity splitter to multiplicity bins analysis
 
-
+#ifdef data_analysis
 //Function needed to dEdx cut described below
 Float_t choose_dedx(Particle *particle, TString system)
 {
@@ -446,6 +446,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
+#endif
 
 void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 {
@@ -650,7 +651,9 @@ int main(int argc, char** argv)
 			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT, Y" << endl
 			<< "ACC <beam_momentum>" << endl
 			<< "MULTSPLIT <n>" << endl
+#ifdef data_analysis
 			<< "DEDX <beam_momentum> <system>" << endl
+#endif
 			<< "ELASTIC <beam_momentum>" << endl
 			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl
 			<< "Y <beam_momentum>" << endl;
@@ -691,6 +694,7 @@ int main(int argc, char** argv)
 		mult_string = argv[4];
 		RunMultSplit(inputfile, outputfile, mult_string);
 	}
+#ifdef data_analysis
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
 		if(argc != 6)
@@ -701,6 +705,7 @@ int main(int argc, char** argv)
 		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
 		//RunDedxCut2(inputfile, outputfile);
 	}
+#endif
 	else if(!(cut_mode.CompareTo("ELASTIC")))
 	{
 		if(argc != 5)
