@@ -581,17 +581,79 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 }
 //pT cut
 
+void RunYCut(TString inputfile, TString outputfile, const Double_t beam_momentum)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long_t particles_in = 0, particles_out = 0;
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	const Double_t proton_mass = 0.939;
+	const Double_t E_beam = TMath::Sqrt(proton_mass*proton_mass + beam_momentum*beam_momentum);
+	const Double_t y_beam = 0.5*TMath::Log((E_beam+beam_momentum)/(E_beam-beam_momentum));
+
+	Double_t E, p2, y_prot;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%1000))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
+
+		particles_in += Npa;
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			p2 = TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2);
+			E = TMath::Sqrt(proton_mass*proton_mass + p2);
+			y_prot = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz()));
+
+			if((y_prot < 0.5) || (y_prot > y_beam-0.5))
+				continue;
+
+			++particles_out;
+			
+			output_tree.AddParticle(*particle);
+		}
+		output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+
+	cout << "y cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+
+}
+
 int main(int argc, char** argv)
 {
 	if(argc <= 3)
 	{
-		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl
-			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT" << endl
-			<< "ACC <energy>" << endl
+		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<beam_momentum>/<multsplit> [<system>]]" << endl
+			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT, Y" << endl
+			<< "ACC <beam_momentum>" << endl
 			<< "MULTSPLIT <n>" << endl
-			<< "DEDX <energy> <system>" << endl
-			<< "ELASTIC <energy>" << endl
-			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl;
+			<< "DEDX <beam_momentum> <system>" << endl
+			<< "ELASTIC <beam_momentum>" << endl
+			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl
+			<< "Y <beam_momentum>" << endl;
 		return 0;
 	}
 
@@ -602,13 +664,14 @@ int main(int argc, char** argv)
 	TString system = argv[5];
 	TString mult_string;
 	TString pt_cut_string;
+	TString y_cut_string;
 
 	cout << "cut mode:" << cut_mode << endl;
 	if(!(cut_mode.CompareTo("ACC")))
 	{
 		if(argc != 5)
 		{
-			cout << "ACC cut requires additional argument: energy" << endl;
+			cout << "ACC cut requires additional argument: beam momentum" << endl;
 			return 0;
 		}
 
@@ -618,7 +681,7 @@ int main(int argc, char** argv)
 	{
 		if(argc != 6)
 		{
-			cout << "PPM cut requires additional arguments: 1.energy, 2.system" << endl;
+			cout << "PPM cut requires additional arguments: 1.beam momentum, 2.system" << endl;
 			return 0;
 		}
 		RunPPMCut(inputfile, outputfile, system, energy);
@@ -632,7 +695,7 @@ int main(int argc, char** argv)
 	{
 		if(argc != 6)
 		{
-			cout << "DEDX cut requires additional arguments: 1.energy, 2. system" << endl;
+			cout << "DEDX cut requires additional arguments: 1.beam momentum, 2. system" << endl;
 			return 0;
 		}
 		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
@@ -642,7 +705,7 @@ int main(int argc, char** argv)
 	{
 		if(argc != 5)
 		{
-			cout << "ELASTIC cut requires additional argument: energy" << endl;
+			cout << "ELASTIC cut requires additional argument: beam momentum" << endl;
 			return 0;
 		}
 		cout << "Elastic cut mode" << endl;
@@ -661,5 +724,18 @@ int main(int argc, char** argv)
 			cout << "Transverse momentum cut mode: pt < 1.5 GeV/c" << endl;
 			RunPtCut(inputfile, outputfile);	//default 1.5 GeV
 		}
+	}
+	else if(!(cut_mode.CompareTo("Y")))
+	{
+		if(argc == 5)
+		{
+			y_cut_string = argv[4];
+			cout << "Rapidity cut on spectators: y_target+0.5 < y < y_beam-0.5" << endl;
+			RunYCut(inputfile, outputfile, y_cut_string.Atof());
+		}
+		else
+			cout << "Y cut requires additional argument: beam momentum" << endl;
+
+		return 0;
 	}
 }		
