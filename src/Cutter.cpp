@@ -603,6 +603,8 @@ void RunYCut(TString inputfile, TString outputfile, const Double_t beam_momentum
 	const Double_t E_beam = TMath::Sqrt(proton_mass*proton_mass + beam_momentum*beam_momentum);
 	const Double_t y_beam = 0.5*TMath::Log((E_beam+beam_momentum)/(E_beam-beam_momentum));
 
+	cout << "y_target=0" << endl << "y_beam=" << y_beam << endl << "Everything outside 0.5 < y_prot < " << (y_beam - 0.5) << " will be rejected" << endl;
+
 	Double_t E, p2, y_prot;
 
 	for(ev=0; ev<treeNentries; ++ev)
