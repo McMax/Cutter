@@ -1,7 +1,7 @@
 CC      = g++
 LD      = g++
 
-CCFLAGS = -g -O1 `root-config --cflags` -Wall -I./inc -I$(PEV_INC)
+CCFLAGS = -g -O1 `root-config --cflags` -Ddata_analysis -Wall -I./inc -I$(PEV_INC)
 LDFLAGS = -g -O1 `root-config --libs` -Wall -L./lib -I$(PEV_LIB)
 
 TOPDIR = .

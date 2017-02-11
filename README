@@ -1,0 +1,2 @@
+Use Makefile to compile the Cutter with cut options for data (e.g. dEdx cut).
+Use Makefile.MC to compile the Cutter using Particle_Event_GENBOD class used in pureMC analysis

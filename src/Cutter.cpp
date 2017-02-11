@@ -51,34 +51,30 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int mome
 		if(!(ev%5000))
 			cout << "Event: " << ev << endl;
 
-			input_tree->GetEntry(ev);
-			Npa = event->GetNpa();
-			output_tree.BeginEvent();
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
 
-			for(part=0; part<Npa; part++)
+		for(part=0; part<Npa; part++)
+		{
+			++particles_in;
+
+			particle = event->GetParticle(part);
+			pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+			E = TMath::Sqrt(pion_mass*pion_mass+p*p);
+			y = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz())) - y_cms;
+			angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
+
+			if(acc_map.acceptanceCut(particle->GetCharge(),y,angle,pt))
 			{
-				++particles_in;
+				output_tree.AddParticle(*particle);
 
-				particle = event->GetParticle(part);
-				pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
-				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
-				E = TMath::Sqrt(pion_mass*pion_mass+p*p);
-				y = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz())) - y_cms;
-				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
-
-				if(acc_map.acceptanceCut(particle->GetCharge(),y,angle,pt))
-				{
-					output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
-
-					++particles_out;
-				}
+				++particles_out;
 			}
+		}
 
-			output_tree.EndEvent();
+		output_tree.EndEvent();
 	}
 
 	output_tree.Close();
@@ -124,33 +120,29 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 		if(!(ev%5000))
 			cout << "Event: " << ev << endl;
 
-			input_tree->GetEntry(ev);
-			Npa = event->GetNpa();
-			output_tree.BeginEvent();
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
 
-			particles_in += Npa;
+		particles_in += Npa;
 
-			for(part=0; part<Npa; part++)
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+			angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
+
+			//The cut itself
+			if(partpopmatrix.PartPopMatrixCut(particle->GetCharge(),p,pt,angle))
 			{
-				particle = event->GetParticle(part);
-				pt = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
-				p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
-				angle = TMath::ATan2(particle->GetPy(), particle->GetPx());
+				output_tree.AddParticle(*particle);
 
-//The cut itself
-				if(partpopmatrix.PartPopMatrixCut(particle->GetCharge(),p,pt,angle))
-				{
-					output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
-
-					particles_out++;
-				}
+				particles_out++;
 			}
+		}
 
-			output_tree.EndEvent();
+		output_tree.EndEvent();
 	}
 
 	output_tree.Close();
@@ -209,11 +201,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				output_tree_all.AddParticle(particle->GetCharge(),
-						particle->GetBx(), particle->GetBy(),
-						particle->GetPx(), particle->GetPy(), particle->GetPz(),
-						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+				output_tree_all.AddParticle(*particle);
 			}
 			++all_count;
 			output_tree_all.EndEvent();
@@ -225,11 +213,11 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				output_tree_pos.AddParticle(particle->GetCharge(),
-						particle->GetBx(), particle->GetBy(),
-						particle->GetPx(), particle->GetPy(), particle->GetPz(),
-						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+
+				if(!(particle->isPositive()))
+					continue;
+
+				output_tree_pos.AddParticle(*particle);
 			}
 			++pos_count;
 			output_tree_pos.EndEvent();
@@ -241,11 +229,11 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
-				output_tree_neg.AddParticle(particle->GetCharge(),
-						particle->GetBx(), particle->GetBy(),
-						particle->GetPx(), particle->GetPy(), particle->GetPz(),
-						particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-						particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+
+				if(particle->isPositive())
+					continue;
+
+				output_tree_neg.AddParticle(*particle);
 			}
 			++neg_count;
 			output_tree_neg.EndEvent();
@@ -262,7 +250,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 }
 //Multiplicity splitter to multiplicity bins analysis
 
-
+#ifdef data_analysis
 //Function needed to dEdx cut described below
 Float_t choose_dedx(Particle *particle, TString system)
 {
@@ -271,6 +259,8 @@ Float_t choose_dedx(Particle *particle, TString system)
 	static Int_t mtpc_part;
 
 	if(!(system.CompareTo("pp")))
+		return particle->GetdEdx();
+	else if(!(system.CompareTo("BeBe")))
 		return particle->GetdEdx();
 	else if(!(system.CompareTo("PbPb")))
 	{
@@ -319,6 +309,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 	Long64_t ev;
 	UInt_t Npa;
 	UInt_t part;
+	UInt_t particles_in = 0, particles_out = 0;
 
 	Float_t local_dedx;
 	Float_t dedx_uppercut = 3.;
@@ -346,6 +337,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 
 		for(part=0; part<Npa; part++)
 		{
+			++particles_in;
 			particle = event->GetParticle(part);
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 			local_dedx = choose_dedx(particle, system);
@@ -355,14 +347,18 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 			if(local_dedx > dedx_uppercut)
 				continue;
 
-			output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+			output_tree.AddParticle(*particle);
+
+			++particles_out;
 		}
 		output_tree.EndEvent();
 	}
+
+	cout << "dEdx cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 
 	output_tree.Close();
 	input_rootfile->Close();
@@ -370,15 +366,16 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 //dEdx cut
 
 Bool_t is_electron(double logP, double dEdx) {
-	static const double a1 = 0.108696;
-	static const double b1 = 1.358696;
+	//static const double a1 = 0.108696;
+	//static const double b1 = 1.358696;
+	static const double a1 = 0.15;
+	static const double b1 = 1.2;
 	//static const double a2 = -0.152174;
 	static const double a2 = -0.1;
-	//static const double b2 = 1.88;
-	//static const double b2 = 1.95;
 	static const double b2 = 2;
 
-	if((logP >= 0.2) && (dEdx > 1.78))
+	//if((logP >= 0.2) && (dEdx > 1.78))
+	if(dEdx > 1.5)
 		return kTRUE;
 	else if((logP > -2) && (logP < 2.4))
 	{
@@ -435,11 +432,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 
 			++particles_out;
 			
-			output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+			output_tree.AddParticle(*particle);
 		}
 		output_tree.EndEvent();
 	}
@@ -453,8 +446,8 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
 		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
 }
+#endif
 
-//Elastic event cut. Not used due to its usage in preanalysis in LxPlus
 void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 {
 	TFile *input_rootfile = new TFile(inputfile);
@@ -472,7 +465,6 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 	UInt_t part, Npa;
 
 	Float_t p;
-	Bool_t event_cancelled;
 
 	for(ev=0; ev<treeNentries; ++ev)
 	{
@@ -480,26 +472,21 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 			cout << "Event: " << ev << endl;
 
 		input_tree->GetEntry(ev);
-
 		Npa = event->GetNpa();
 
-		event_cancelled = false;
-		for(part=0; part<Npa; ++part)
+		//If, after cuts before, we left only with one positively charged particle with momentum close to beam momentum, I assume that it is a proton from beam which interacted elastically with target. I reject this proton and therefore whole event.
+		if(Npa == 1)
 		{
-			particle = event->GetParticle(part);
+			particle = event->GetParticle(0);
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 			if((particle->isPositive()) && (p > energy - 3))
 			{
-				event_cancelled = true;
-				break;
+				particles_in++;
+				continue;
 			}
 		}
 
 		particles_in+=Npa;
-
-		if(event_cancelled)
-			continue;
-
 		events_out++;
 		
 		output_tree.BeginEvent();
@@ -508,11 +495,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		{
 			particle = event->GetParticle(part);
 			
-			output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+			output_tree.AddParticle(*particle);
 		}
 		output_tree.EndEvent();
 		particles_out+=Npa;
@@ -525,7 +508,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		<< "Events before cut: " << treeNentries  << endl
 		<< "Events after cut: " << events_out << endl
 		<< "Cutted events: " << (treeNentries-events_out) << endl
-		<< "Ratio: " << ((Double_t)treeNentries/events_out) << "\n------------" << endl
+		<< "Ratio: " << ((Double_t)events_out/treeNentries) << "\n------------" << endl
 		<< "Particles before cut: " << particles_in << endl
 		<< "Particles after cut: " << particles_out << endl
 		<< "Cutted particles: " << (particles_in-particles_out) << endl
@@ -583,11 +566,7 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 
 			++particles_out;
 			
-			output_tree.AddParticle(particle->GetCharge(),
-					particle->GetBx(), particle->GetBy(),
-					particle->GetPx(), particle->GetPy(), particle->GetPz(),
-					particle->GetdEdx(), particle->GetdEdxVtpc1(), particle->GetdEdxVtpc2(), particle->GetdEdxMtpc(),
-					particle->GetNdEdx(), particle->GetNdEdxVtpc1(), particle->GetNdEdxVtpc2(), particle->GetNdEdxMtpc());
+			output_tree.AddParticle(*particle);
 		}
 		output_tree.EndEvent();
 	}
@@ -603,11 +582,83 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 }
 //pT cut
 
+void RunYCut(TString inputfile, TString outputfile, const Double_t beam_momentum)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long_t particles_in = 0, particles_out = 0;
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+
+	const Double_t proton_mass = 0.939;
+	const Double_t E_beam = TMath::Sqrt(proton_mass*proton_mass + beam_momentum*beam_momentum);
+	const Double_t y_beam = 0.5*TMath::Log((E_beam+beam_momentum)/(E_beam-beam_momentum));
+
+	cout << "y_target=0" << endl << "y_beam=" << y_beam << endl << "Everything outside 0.5 < y_prot < " << (y_beam - 0.5) << " will be rejected" << endl;
+
+	Double_t E, p2, y_prot;
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%1000))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
+
+		particles_in += Npa;
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			p2 = TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2);
+			E = TMath::Sqrt(proton_mass*proton_mass + p2);
+			y_prot = 0.5*TMath::Log((E+particle->GetPz())/(E-particle->GetPz()));
+
+			if((y_prot < 0.5) || (y_prot > y_beam-0.5))
+				continue;
+
+			++particles_out;
+			
+			output_tree.AddParticle(*particle);
+		}
+		output_tree.EndEvent();
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+
+	cout << "y cut summary\n------------" << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << (particles_in-particles_out) << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+
+}
+
 int main(int argc, char** argv)
 {
-	if(argc <= 1)
+	if(argc <= 3)
 	{
-		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<energy>/<multsplit> [<system>]]" << endl;
+		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<beam_momentum>/<multsplit> [<system>]]" << endl
+			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT, Y" << endl
+			<< "ACC <beam_momentum>" << endl
+			<< "MULTSPLIT <n>" << endl
+#ifdef data_analysis
+			<< "DEDX <beam_momentum> <system>" << endl
+#endif
+			<< "ELASTIC <beam_momentum>" << endl
+			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl
+			<< "Y <beam_momentum>" << endl;
 		return 0;
 	}
 
@@ -618,13 +669,14 @@ int main(int argc, char** argv)
 	TString system = argv[5];
 	TString mult_string;
 	TString pt_cut_string;
+	TString y_cut_string;
 
 	cout << "cut mode:" << cut_mode << endl;
 	if(!(cut_mode.CompareTo("ACC")))
 	{
 		if(argc != 5)
 		{
-			cout << "ACC cut requires additional argument: energy" << endl;
+			cout << "ACC cut requires additional argument: beam momentum" << endl;
 			return 0;
 		}
 
@@ -634,7 +686,7 @@ int main(int argc, char** argv)
 	{
 		if(argc != 6)
 		{
-			cout << "PPM cut requires additional arguments: 1.energy, 2.system" << endl;
+			cout << "PPM cut requires additional arguments: 1.beam momentum, 2.system" << endl;
 			return 0;
 		}
 		RunPPMCut(inputfile, outputfile, system, energy);
@@ -644,21 +696,23 @@ int main(int argc, char** argv)
 		mult_string = argv[4];
 		RunMultSplit(inputfile, outputfile, mult_string);
 	}
+#ifdef data_analysis
 	else if(!(cut_mode.CompareTo("DEDX")))
 	{
 		if(argc != 6)
 		{
-			cout << "DEDX cut requires additional arguments: 1.energy, 2. system" << endl;
+			cout << "DEDX cut requires additional arguments: 1.beam momentum, 2. system" << endl;
 			return 0;
 		}
-		//RunDedxCut(inputfile, outputfile, system, energy.Atoi());
-		RunDedxCut2(inputfile, outputfile);
+		RunDedxCut(inputfile, outputfile, system, energy.Atoi());
+		//RunDedxCut2(inputfile, outputfile);
 	}
+#endif
 	else if(!(cut_mode.CompareTo("ELASTIC")))
 	{
 		if(argc != 5)
 		{
-			cout << "ELASTIC cut requires additional argument: energy" << endl;
+			cout << "ELASTIC cut requires additional argument: beam momentum" << endl;
 			return 0;
 		}
 		cout << "Elastic cut mode" << endl;
@@ -677,5 +731,18 @@ int main(int argc, char** argv)
 			cout << "Transverse momentum cut mode: pt < 1.5 GeV/c" << endl;
 			RunPtCut(inputfile, outputfile);	//default 1.5 GeV
 		}
+	}
+	else if(!(cut_mode.CompareTo("Y")))
+	{
+		if(argc == 5)
+		{
+			y_cut_string = argv[4];
+			cout << "Rapidity cut on spectators: y_target+0.5 < y < y_beam-0.5" << endl;
+			RunYCut(inputfile, outputfile, y_cut_string.Atof());
+		}
+		else
+			cout << "Y cut requires additional argument: beam momentum" << endl;
+
+		return 0;
 	}
 }		

@@ -1,2 +1,2 @@
 #!/bin/bash
-vim -p src/* inc/*
+vim -p src/* inc/* Makefile*
