@@ -200,7 +200,7 @@ TCutG* initialise_dedx_cutg(TString system, Int_t energy)
 			}
 			case 20:
 			{
-				TCutG *cutg = new TCutG("dedx_cut",12);
+				cutg = new TCutG("dedx_cut",12);
 				cutg->SetTitle("e^{-} dE/dx cut for Be+Be @ 20 GeV/c");
 				cutg->SetFillColor(1);
 				cutg->SetPoint(0,0.05809829,1.648346);
