@@ -157,10 +157,16 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 //Particle Population Matrix cut
 
 //Multiplicity splitter to multiplicity bins analysis
-void RunMultSplit(TString inputfile, TString outputfile, const TString mult_string)
+void RunMultSplit(TString inputfile, TString outputfile, const TString mult_string, const TString multmax_string)
 {
-	cout << "Running multiplicity splitter (" << mult_string << ") mode" << endl;
 	const UInt_t multiplicity = atoi(mult_string);
+	const UInt_t multiplicity_max = atoi(multmax_string);
+
+	if(multiplicity==multiplicity_max)
+		cout << "Running multiplicity splitter (" << mult_string << ") mode" << endl;
+	else
+		cout << "Running multiplicity splitter for range [" << mult_string << ", " << multmax_string << "]" << endl;
+	
 
 	TFile *input_rootfile = new TFile(inputfile);
 	TTree* input_tree = (TTree*)input_rootfile->Get("events");
@@ -195,7 +201,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 		Npos = event->GetNpos();
 		Nneg = event->GetNneg();
 
-		if(Npa==multiplicity)
+		if((Npa >= multiplicity) && (Npa <= multiplicity_max))
 		{
 			output_tree_all.BeginEvent();
 			for(part=0; part<Npa; part++)
@@ -207,7 +213,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			output_tree_all.EndEvent();
 		}
 
-		if(Npos==multiplicity)
+		if((Npos >= multiplicity) && (Npos <= multiplicity_max))
 		{
 			output_tree_pos.BeginEvent();
 			for(part=0; part<Npa; part++)
@@ -223,7 +229,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 			output_tree_pos.EndEvent();
 		}
 
-		if(Nneg==multiplicity)
+		if((Nneg >= multiplicity) && (Nneg <= multiplicity_max))
 		{
 			output_tree_neg.BeginEvent();
 			for(part=0; part<Npa; part++)
@@ -667,7 +673,7 @@ int main(int argc, char** argv)
 	TString cut_mode = argv[3];
 	TString energy = argv[4];
 	TString system = argv[5];
-	TString mult_string;
+	TString mult_string, multmax_string;
 	TString pt_cut_string;
 	TString y_cut_string;
 
@@ -693,8 +699,25 @@ int main(int argc, char** argv)
 	}
 	else if(!(cut_mode.CompareTo("MULTSPLIT")))
 	{
-		mult_string = argv[4];
-		RunMultSplit(inputfile, outputfile, mult_string);
+		if(argc == 5)
+		{
+			mult_string = argv[4];
+			RunMultSplit(inputfile, outputfile, mult_string, mult_string);
+		}
+		else if(argc == 6)
+		{
+			mult_string = argv[4];
+			multmax_string = argv[5];
+			RunMultSplit(inputfile, outputfile, mult_string, multmax_string);
+		}
+		else
+		{
+			cout << "MULTSPLIT cut requires additional one or two arguments:" << endl
+				<< "Single multiplicity bin to be cropped out of the dataset or" << endl
+				<< "Multiplicity range. Bins from MIN do MAX (including) will be cropped." << endl
+				<< "Example: MULTSPLIT <MIN> [<MAX>]" << endl;
+			return 0;
+		}
 	}
 #ifdef data_analysis
 	else if(!(cut_mode.CompareTo("DEDX")))
