@@ -4,6 +4,7 @@
 
 #include "TMath.h"
 #include "TCutG.h"
+#include "TRandom2.h"
 
 #include "ParticleTree.h"
 #include "Event.h"
@@ -11,6 +12,7 @@
 #include "AccCut.h"
 #include "dEdxCut.h"
 #include "PPMCut.h"
+#include "TTRCut.h"
 
 using namespace std;
 
@@ -260,14 +262,17 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 //Function needed to dEdx cut described below
 Float_t choose_dedx(Particle *particle, TString system)
 {
+	/*
 	static Int_t vtpc1_part;
 	static Int_t vtpc2_part;
 	static Int_t mtpc_part;
+	*/
 
 	if(!(system.CompareTo("pp")))
 		return particle->GetdEdx();
 	else if(!(system.CompareTo("BeBe")))
 		return particle->GetdEdx();
+	/*
 	else if(!(system.CompareTo("PbPb")))
 	{
 		vtpc1_part = particle->GetNdEdxVtpc1();
@@ -290,6 +295,7 @@ Float_t choose_dedx(Particle *particle, TString system)
 				return (particle->GetdEdxVtpc1());
 		}
 	}
+	*/
 	else
 		return -1;
 }
@@ -651,12 +657,113 @@ void RunYCut(TString inputfile, TString outputfile, const Double_t beam_momentum
 
 }
 
+int RunTTRCut(TString inputfile, TString outputfile, double distance)
+{
+	TTRCut ttrcut;
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particleA, *particleB;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	Long_t particles_in = 0, particles_out = 0;
+	UInt_t partA, partB, part, Npa;
+
+	Float_t distance_av;
+	cout << "distance in function: " << distance << endl;
+
+	TRandom2 randgen(time(NULL));
+
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%500))
+			cout << "Event: " << ev << " " << event->GetNpa() << " particles" << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+
+		Bool_t ttr_flags[Npa];
+		fill_n(ttr_flags,Npa,true);
+		
+		//First run - marking particles as good or bad to analyze
+		for(partA=0; partA<Npa; partA++)
+		{
+			++particles_in;
+			if(!ttr_flags[partA])
+			{
+				//cout << "Ev: " << ev << " part: " << partA << " skipped" << endl;
+				continue;
+			}
+
+			particleA = event->GetParticle(partA);
+
+			for(partB=partA+1; partB<Npa; ++partB)
+			{
+				if(!ttr_flags[partB])
+				{
+					//cout << "Ev: " << ev << " part: " << partB << " skipped" << endl;
+					continue;
+				}
+
+				particleB = event->GetParticle(partB);
+
+				///////////////////
+				distance_av = ttrcut.calcAvDistance(particleA,particleB);
+				//////////////////
+				
+				if(distance_av < distance)
+				{
+					//Remove random particle
+					if((randgen.Rndm()) < 0.5)
+						ttr_flags[partA] = false;
+					else
+						ttr_flags[partB] = false;
+					//cout << "Ev: " << ev << " particles " << partA << " and " << partB << " will be cut" << endl;
+					//cerr << "Average: " << distance_av << endl;
+					break;
+				}
+			}
+		}
+		//cerr << "Event: " << ev << " | Cutted " << (Npa-output_tree.Check()) << " particles" << endl;
+		
+		//Second run - copying good particles
+		output_tree.BeginEvent();
+		for(part=0; part<Npa; part++)
+		{
+			if(!ttr_flags[part])
+				continue;
+
+			++particles_out;
+			output_tree.AddParticle(*(event->GetParticle(part)));
+			
+		}
+		output_tree.EndEvent();
+	}
+
+	input_rootfile->Close();
+	output_tree.Close();
+
+	cout << "TTR cut summary\n------------" << endl
+		<< "Events: " << treeNentries << endl
+		<< "Particles before cut: " << particles_in << endl
+		<< "Particles after cut: " << particles_out << endl
+		<< "Cutted particles: " << particles_in-particles_out << endl
+		<< "Ratio: " << ((Double_t)particles_out/particles_in) << endl;
+
+	return particles_out;
+}
+
 int main(int argc, char** argv)
 {
 	if(argc <= 3)
 	{
 		cout << "USAGE: cutter <inputfile> <outputfile> <cut_mode> [<beam_momentum>/<multsplit> [<system>]]" << endl
-			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT, Y" << endl
+			<< "<cut_mode> = ACC, MULTSPLIT, DEDX, ELASTIC, PT, Y, TTD" << endl
 			<< "ACC <beam_momentum>" << endl
 			<< "MULTSPLIT <n>" << endl
 #ifdef data_analysis
@@ -664,7 +771,8 @@ int main(int argc, char** argv)
 #endif
 			<< "ELASTIC <beam_momentum>" << endl
 			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl
-			<< "Y <beam_momentum>" << endl;
+			<< "Y <beam_momentum>" << endl
+			<< "TTD <minimal_two-track_distance>" << endl;
 		return 0;
 	}
 
@@ -673,6 +781,7 @@ int main(int argc, char** argv)
 	TString cut_mode = argv[3];
 	TString energy = argv[4];
 	TString system = argv[5];
+	TString ttr_distance = argv[4];
 	TString mult_string, multmax_string;
 	TString pt_cut_string;
 	TString y_cut_string;
@@ -767,5 +876,16 @@ int main(int argc, char** argv)
 			cout << "Y cut requires additional argument: beam momentum" << endl;
 
 		return 0;
+	}
+	else if(!(cut_mode.CompareTo("TTD")))
+	{
+		cout << "Two-track distance cut" << endl;
+		if(argc == 5)
+		{
+			cout << "Running with cut distance " << ttr_distance << " cm" << endl;
+			RunTTRCut(inputfile,outputfile,ttr_distance.Atof());
+		}
+		else
+			cout << "TTD cut requires additional argument: minimal distance between tracks" << endl;
 	}
 }		
