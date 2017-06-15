@@ -53,7 +53,7 @@ void RunAccCut(const TString inputfile, const TString outputfile, const int mome
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		for(part=0; part<Npa; part++)
 		{
@@ -122,7 +122,7 @@ void RunPPMCut(TString inputfile, TString outputfile, TString system, TString en
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		particles_in += Npa;
 
@@ -203,7 +203,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 
 		if((Npa >= multiplicity) && (Npa <= multiplicity_max))
 		{
-			output_tree_all.BeginEvent();
+			output_tree_all.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
@@ -215,7 +215,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 
 		if((Npos >= multiplicity) && (Npos <= multiplicity_max))
 		{
-			output_tree_pos.BeginEvent();
+			output_tree_pos.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
@@ -231,7 +231,7 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 
 		if((Nneg >= multiplicity) && (Nneg <= multiplicity_max))
 		{
-			output_tree_neg.BeginEvent();
+			output_tree_neg.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 			for(part=0; part<Npa; part++)
 			{
 				particle = event->GetParticle(part);
@@ -260,36 +260,10 @@ void RunMultSplit(TString inputfile, TString outputfile, const TString mult_stri
 //Function needed to dEdx cut described below
 Float_t choose_dedx(Particle *particle, TString system)
 {
-	static Int_t vtpc1_part;
-	static Int_t vtpc2_part;
-	static Int_t mtpc_part;
-
 	if(!(system.CompareTo("pp")))
 		return particle->GetdEdx();
 	else if(!(system.CompareTo("BeBe")))
 		return particle->GetdEdx();
-	else if(!(system.CompareTo("PbPb")))
-	{
-		vtpc1_part = particle->GetNdEdxVtpc1();
-		vtpc2_part = particle->GetNdEdxVtpc2();
-		mtpc_part = particle->GetNdEdxMtpc();
-
-		//std::cout << "dE/dx: VTPC1 part: " << vtpc1_part << "\tVTPC2 part: " << vtpc2_part << "\tMTPC part: " << mtpc_part << std::endl;
-		if((vtpc1_part == 0) && (vtpc2_part == 0) && (mtpc_part == 0))
-		{
-			std::cout << "WTF? Particle with no dE/dx information!" << std::endl;
-			return 0;
-		}
-		else
-		{
-			if(mtpc_part > 0)
-				return (particle->GetdEdxMtpc());
-			else if(vtpc2_part >= vtpc1_part)
-				return (particle->GetdEdxVtpc2());
-			else
-				return (particle->GetdEdxVtpc1());
-		}
-	}
 	else
 		return -1;
 }
@@ -339,7 +313,7 @@ void RunDedxCut(TString inputfile, TString outputfile, TString system, Int_t ene
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		for(part=0; part<Npa; part++)
 		{
@@ -425,7 +399,7 @@ void RunDedxCut2(TString inputfile, TString outputfile)
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		particles_in += Npa;
 		for(part=0; part<Npa; part++)
@@ -495,7 +469,7 @@ void RunElasticCut(TString inputfile, TString outputfile, Int_t energy)
 		particles_in+=Npa;
 		events_out++;
 		
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		for(part=0; part<Npa; part++)
 		{
@@ -550,7 +524,7 @@ void RunPtCut(TString inputfile, TString outputfile, const Float_t ptcut=1.5)
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		particles_in += Npa;
 		for(part=0; part<Npa; part++)
@@ -620,7 +594,7 @@ void RunYCut(TString inputfile, TString outputfile, const Double_t beam_momentum
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
-		output_tree.BeginEvent();
+		output_tree.BeginEvent(event->GetNA61Run(),event->GetNA61Event());
 
 		particles_in += Npa;
 		for(part=0; part<Npa; part++)
