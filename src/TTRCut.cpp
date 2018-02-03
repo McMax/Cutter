@@ -11,79 +11,138 @@ TTRCut::TTRCut()
 	mov.Set(0.,0.);
 }
 
+bool TTRCut::IsGood(const double position_x, const double position_y)
+{
+	if((position_x < 900000) && (position_y < 900000))
+		return true;
+	else
+		return false;
+}
+
 Double_t TTRCut::calcAvDistance(Particle* partA, Particle* partB)
 {
 	static int count;
 	static float distance_sum;
 	static TVector2 trackA, trackB, mov;
 
+	double x1, y1, x2, y2;
+
 	count = 0;
 	distance_sum = 0;
 
 
 	//VTPC1 front
-	trackA.Set(partA->GetVTPC1fX(),partA->GetVTPC1fY());
-	trackB.Set(partB->GetVTPC1fX(),partB->GetVTPC1fY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "VTPC1 start. Distance: " << mov.Mod() << endl;
-	++count;
+	x1 = partA->GetVTPC1fX();
+	y1 = partA->GetVTPC1fY();
+	x2 = partB->GetVTPC1fX();
+	y2 = partB->GetVTPC1fY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "VTPC1 start. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//VTPC1 end
-	trackA.Set(partA->GetVTPC1bX(),partA->GetVTPC1bY());
-	trackB.Set(partB->GetVTPC1bX(),partB->GetVTPC1bY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "VTPC1 end. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetVTPC1bX();
+	y1 = partA->GetVTPC1bY();
+	x2 = partB->GetVTPC1bX();
+	y2 = partB->GetVTPC1bY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "VTPC1 end. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//GTPC start
-	trackA.Set(partA->GetGTPCfX(),partA->GetGTPCfY());
-	trackB.Set(partB->GetGTPCfX(),partB->GetGTPCfY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "GTPC start. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetGTPCfX();
+	y1 = partA->GetGTPCfY();
+	x2 = partB->GetGTPCfX();
+	y2 = partB->GetGTPCfY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "GTPC start. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//GTPC end
-	trackA.Set(partA->GetGTPCbX(),partA->GetGTPCbY());
-	trackB.Set(partB->GetGTPCbX(),partB->GetGTPCbY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "GTPC end. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetGTPCbX();
+	y1 = partA->GetGTPCbY();
+	x2 = partB->GetGTPCbX();
+	y2 = partB->GetGTPCbY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "GTPC end. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//VTPC2 start
-	trackA.Set(partA->GetVTPC2fX(),partA->GetVTPC2fY());
-	trackB.Set(partB->GetVTPC2fX(),partB->GetVTPC2fY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "VTPC2 start. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetVTPC2fX();
+	y1 = partA->GetVTPC2fY();
+	x2 = partB->GetVTPC2fX();
+	y2 = partB->GetVTPC2fY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "VTPC2 start. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//VTPC2 end
-	trackA.Set(partA->GetVTPC2bX(),partA->GetVTPC2bY());
-	trackB.Set(partB->GetVTPC2bX(),partB->GetVTPC2bY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "VTPC2 end. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetVTPC2bX();
+	y1 = partA->GetVTPC2bY();
+	x2 = partB->GetVTPC2bX();
+	y2 = partB->GetVTPC2bY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "VTPC2 end. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//MTPC start
-	trackA.Set(partA->GetMTPCfX(),partA->GetMTPCfY());
-	trackB.Set(partB->GetMTPCfX(),partB->GetMTPCfY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "MTPC start. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetMTPCfX();
+	y1 = partA->GetMTPCfY();
+	x2 = partB->GetMTPCfX();
+	y2 = partB->GetMTPCfY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "MTPC start. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	//MTPC end
-	trackA.Set(partA->GetMTPCbX(),partA->GetMTPCbY());
-	trackB.Set(partB->GetMTPCbX(),partB->GetMTPCbY());
-	mov = trackB - trackA;
-	distance_sum += mov.Mod();
-	//cout << "MTPC end. Distance: " << mov.Mod() << endl;
-	++count;
-
+	x1 = partA->GetMTPCbX();
+	y1 = partA->GetMTPCbY();
+	x2 = partB->GetMTPCbX();
+	y2 = partB->GetMTPCbY();
+	if(IsGood(x1,y1) && IsGood(x2,y2))
+	{
+		trackA.Set(x1,y1);
+		trackB.Set(x2,y2);
+		mov = trackB - trackA;
+		distance_sum += mov.Mod();
+		//cout << "MTPC end. Distance: " << mov.Mod() << endl;
+		++count;
+	}
 	if(count==0)
 		return -1;
 
