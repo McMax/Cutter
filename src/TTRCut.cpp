@@ -13,7 +13,7 @@ TTRCut::TTRCut()
 
 bool TTRCut::IsGood(const double position_x, const double position_y)
 {
-	if((position_x < 900000) && (position_y < 900000))
+	if((position_x < 100000) && (position_y < 100000))
 		return true;
 	else
 		return false;
