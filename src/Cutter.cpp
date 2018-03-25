@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <vector>
+#include <algorithm>
 
 #include "TMath.h"
 #include "TCutG.h"
@@ -11,6 +13,7 @@
 #include "AccCut.h"
 #include "dEdxCut.h"
 #include "PPMCut.h"
+#include "CentralitySelection.h"
 
 using namespace std;
 
@@ -651,6 +654,123 @@ void RunYCut(TString inputfile, TString outputfile, const Double_t beam_momentum
 
 }
 
+void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, Int_t energy, Double_t centrality_percentile=5.)
+{
+	TFile *input_rootfile = new TFile(inputfile);
+	TTree* input_tree = (TTree*)input_rootfile->Get("events");
+	ParticleTree output_tree(outputfile);
+
+	Event *event = new Event();
+	Particle *particle;
+	input_tree->SetBranchAddress("event",&event);
+
+	const Long64_t treeNentries = input_tree->GetEntries();
+	Long64_t ev;
+	UInt_t Npa;
+	UInt_t part;
+	UInt_t ev_out = 0;
+
+	CentralitySelection psdacc("PSD_acceptance_maps_BeBe_40_GeVc.root",system,energy);
+
+	double p, pT, phi;
+	int charge;
+	vector<double> Ef_vector;
+	double EF;
+	double EF_of_centrality_edge;	// Forward energy of the X% of the most central events
+	int index_of_centrality_edge;	// Ef_vector index of the X% of the most central events
+
+	//First iteration - calculation of mininum bias forward energy
+	cout << "First iteration - calculation of minimum bias forward energy" << endl;
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%500))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+
+		EF = 0;
+
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+			pT = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+			phi = TMath::ATan2(particle->GetPy(), particle->GetPx());
+			charge = (particle->isPositive() ? 1 : -1);
+
+			if(psdacc.checkAcceptance(p, pT, charge, phi) == 1)
+			{
+				//TODO: Calculate energy and add it to forward energy sum
+				//EF += ...
+			}
+		}
+		
+		//if forward energy sum is greater than 0, add it 
+		if(EF > 0)
+			Ef_vector.push_back(EF);
+	}
+
+	//Sorting to choose X% of the lowest values
+	sort(Ef_vector.begin(), Ef_vector.end());
+	//Taking the index of value corresponding to X% of the sorted forward energy vector
+	index_of_centrality_edge = (int)(Ef_vector.size()*centrality_percentile/100);
+	//Taking the value of EF of that index
+	EF_of_centrality_edge = Ef_vector[index_of_centrality_edge];
+
+
+	//Second iteration - choosing the centrality
+	for(ev=0; ev<treeNentries; ++ev)
+	{
+		if(!(ev%500))
+			cout << "Event: " << ev << endl;
+
+		input_tree->GetEntry(ev);
+		Npa = event->GetNpa();
+		output_tree.BeginEvent();
+		EF = 0;
+
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
+			pT = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
+			phi = TMath::ATan2(particle->GetPy(), particle->GetPx());
+			charge = (particle->isPositive() ? 1 : -1);
+
+			if(psdacc.checkAcceptance(p, pT, charge, phi) == 1)
+			{
+				//TODO: Calculate energy and add it to forward energy sum
+				//EF += ...
+			}
+		}
+		
+		//if forward energy sum is smaller than EF edge for X% of the most central, accept the event
+		if(EF >= EF_of_centrality_edge)
+			continue;
+
+		for(part=0; part<Npa; part++)
+		{
+			particle = event->GetParticle(part);
+
+			output_tree.AddParticle(*particle);
+		}
+
+		output_tree.EndEvent();
+		ev_out++;
+	}
+
+	output_tree.Close();
+	input_rootfile->Close();
+
+	cout << "PSD ACC selection summary\n------------" << endl
+		<< "Events before cut: " << Npa << endl
+		<< "Events after cut: " << ev_out << endl
+		<< "Cutted events: " << (Npa-ev_out) << endl
+		<< "Ratio: " << ((Double_t)ev_out/Npa) << endl;
+
+}
+
 int main(int argc, char** argv)
 {
 	if(argc <= 3)
@@ -664,7 +784,8 @@ int main(int argc, char** argv)
 #endif
 			<< "ELASTIC <beam_momentum>" << endl
 			<< "PT <pt=1.5> (will cut from 0 to 1.5 GeV/c, negative <pt> values will result with cutting from <pt> to infinity)" << endl
-			<< "Y <beam_momentum>" << endl;
+			<< "Y <beam_momentum>" << endl
+			<< "PSDACC <beam_momentum> <system> [<centrality>]" << endl;
 		return 0;
 	}
 
@@ -676,6 +797,7 @@ int main(int argc, char** argv)
 	TString mult_string, multmax_string;
 	TString pt_cut_string;
 	TString y_cut_string;
+	TString centrality_string;
 
 	cout << "cut mode:" << cut_mode << endl;
 	if(!(cut_mode.CompareTo("ACC")))
@@ -766,6 +888,23 @@ int main(int argc, char** argv)
 		else
 			cout << "Y cut requires additional argument: beam momentum" << endl;
 
+		return 0;
+	}
+	else if(!(cut_mode.CompareTo("PSDACC")))
+	{
+		if(argc == 6)
+		{
+			cout << "5\% centrality selection for " << system << "@" << energy << "GeV" << endl;
+			RunPSDAccSelection(inputfile, outputfile, system, energy.Atoi());
+		}
+		else if(argc == 7)
+		{
+			centrality_string = argv[6];
+			cout << centrality_string << "\% centrality selection for " << system << "@" << energy << "GeV" << endl;
+			RunPSDAccSelection(inputfile, outputfile, system, energy.Atoi(), centrality_string.Atof());
+		}
+		else
+			cout << "PSDACC cut requires: 1. system, 2. energy, 3. centrality (optional)" << endl;
 		return 0;
 	}
 }		
