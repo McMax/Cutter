@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include "CentralitySelection.h"
 
 CentralitySelection::CentralitySelection(const TString filename, const TString system, const TString energy)

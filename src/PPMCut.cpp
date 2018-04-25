@@ -42,7 +42,8 @@ bool PPMCut::PartPopMatrixCut(const int ch, const double p, const double pt, con
 	else if(ch<0)
 		result = partpopmatrix_neg->GetBinContent(partpopmatrix_neg->FindBin(p,pt,angle));
 	else
-		std::cout << "WTF? charge == 0" << std::endl;
+		//std::cout << "WTF? charge == 0" << std::endl;
+		result = 0;
 
 	if(result == 0)
 	{
