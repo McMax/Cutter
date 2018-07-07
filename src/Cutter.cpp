@@ -670,10 +670,10 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 	UInt_t part;
 	UInt_t ev_out = 0;
 
-	CentralitySelection psdacc("PSD_acceptance_maps_BeBe_40_GeVc.root",system,energy);
+	CentralitySelection psdacc(TString::Format("PSD_acceptance_maps_BeBe_%d_GeVc.root",energy),system,energy);
 
-	double p, pT, phi;
-	int charge;
+	double p, pT, phi, mass;
+	short charge;
 	vector<double> Ef_vector;
 	double EF;
 	double EF_of_centrality_edge;	// Forward energy of the X% of the most central events
@@ -697,13 +697,11 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 			pT = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
 			phi = TMath::ATan2(particle->GetPy(), particle->GetPx());
-			charge = (particle->isPositive() ? 1 : -1);
+			charge = particle->GetCharge();
+			mass = particle->GetMass();
 
 			if(psdacc.checkAcceptance(p, pT, charge, phi) == 1)
-			{
-				//TODO: Calculate energy and add it to forward energy sum
-				//EF += ...
-			}
+				EF += TMath::Sqrt(p*p + mass*mass);
 		}
 		
 		//if forward energy sum is greater than 0, add it 
@@ -736,13 +734,11 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 			p = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2)+TMath::Power(particle->GetPz(),2));
 			pT = TMath::Sqrt(TMath::Power(particle->GetPx(),2)+TMath::Power(particle->GetPy(),2));
 			phi = TMath::ATan2(particle->GetPy(), particle->GetPx());
-			charge = (particle->isPositive() ? 1 : -1);
+			charge = particle->GetCharge();
+			mass = particle->GetMass();
 
 			if(psdacc.checkAcceptance(p, pT, charge, phi) == 1)
-			{
-				//TODO: Calculate energy and add it to forward energy sum
-				//EF += ...
-			}
+				EF += TMath::Sqrt(p*p + mass*mass);
 		}
 		
 		//if forward energy sum is smaller than EF edge for X% of the most central, accept the event
@@ -752,7 +748,6 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 		for(part=0; part<Npa; part++)
 		{
 			particle = event->GetParticle(part);
-
 			output_tree.AddParticle(*particle);
 		}
 
@@ -764,10 +759,10 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 	input_rootfile->Close();
 
 	cout << "PSD ACC selection summary\n------------" << endl
-		<< "Events before cut: " << Npa << endl
+		<< "Events before cut: " << treeNentries << endl
 		<< "Events after cut: " << ev_out << endl
-		<< "Cutted events: " << (Npa-ev_out) << endl
-		<< "Ratio: " << ((Double_t)ev_out/Npa) << endl;
+		<< "Cutted events: " << (treeNentries-ev_out) << endl
+		<< "Ratio: " << ((Double_t)ev_out/treeNentries) << endl;
 
 }
 
