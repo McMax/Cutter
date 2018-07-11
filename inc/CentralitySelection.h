@@ -16,7 +16,7 @@ public:
 
 	int checkAcceptance(double, double, int, double);
 
-	void openAccMapFile(const TString, const TString, const TString);
+	int openAccMapFile(const TString, const TString, const TString);
 	void closeAccMapFile();
 };
 

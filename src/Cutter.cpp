@@ -670,7 +670,7 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 	UInt_t part;
 	UInt_t ev_out = 0;
 
-	CentralitySelection psdacc("PSD_acceptance_maps_BeBe_40_GeVc.root",system,energy);
+	CentralitySelection psdacc(TString::Format("PSD_acceptance_maps_BeBe_%d_GeVc.root",energy),system,energy);
 
 	double p, pT, phi;
 	int charge;
@@ -904,7 +904,7 @@ int main(int argc, char** argv)
 			RunPSDAccSelection(inputfile, outputfile, system, energy.Atoi(), centrality_string.Atof());
 		}
 		else
-			cout << "PSDACC cut requires: 1. system, 2. energy, 3. centrality (optional)" << endl;
+			cout << "PSDACC cut requires: 1. energy, 2. system, 3. centrality (optional)" << endl;
 		return 0;
 	}
 }		

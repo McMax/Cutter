@@ -4,7 +4,12 @@
 
 CentralitySelection::CentralitySelection(const TString filename, const TString system, const TString energy)
 {
-	openAccMapFile(filename, system, energy);
+	if(openAccMapFile(filename, system, energy) != 0)
+	{
+		std::cout << "Exiting" << std::endl;
+		return ;
+	}
+
 	beam_momentum = energy.Atoi();
 }
 
@@ -47,16 +52,21 @@ int CentralitySelection::checkAcceptance(double p, double pT, int charge, double
 	}
 }
 
-void CentralitySelection::openAccMapFile(const TString filename, const TString system, const TString energy)
+int CentralitySelection::openAccMapFile(const TString filename, const TString system, const TString energy)
 {
 	acceptance_map = new TFile(filename, "READ");
 
 	if(acceptance_map->IsZombie())
+	{
 		std::cout << "File " << filename << " not opened" << std::endl;
+		return 1;
+	}
 
 	acc_map_pos = (TH3D*)acceptance_map->Get(TString::Format("positiveMap_%s_%s_GeVc",system.Data(),energy.Data()));
 	acc_map_neg = (TH3D*)acceptance_map->Get(TString::Format("negativeMap_%s_%s_GeVc",system.Data(),energy.Data()));
 	acc_map_neu = (TH3D*)acceptance_map->Get(TString::Format("neutralMap_%s_%s_GeVc",system.Data(),energy.Data()));
+
+	return 0;
 }
 
 void CentralitySelection::closeAccMapFile()
