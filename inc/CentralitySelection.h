@@ -11,12 +11,12 @@ class CentralitySelection
 
 public:
 	CentralitySelection() {}
-	CentralitySelection(const TString, const TString, const TString);
+	CentralitySelection(const TString, const TString, const Int_t);
 	~CentralitySelection();
 
 	int checkAcceptance(double, double, int, double);
 
-	int openAccMapFile(const TString, const TString, const TString);
+	void openAccMapFile(const TString, const TString, const Int_t);
 	void closeAccMapFile();
 };
 

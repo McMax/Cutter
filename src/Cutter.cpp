@@ -684,7 +684,7 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 	for(ev=0; ev<treeNentries; ++ev)
 	{
 		if(!(ev%500))
-			cout << "Event: " << ev << endl;
+			cerr << "Event: " << ev << endl;
 
 		input_tree->GetEntry(ev);
 		Npa = event->GetNpa();
@@ -706,7 +706,10 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 		
 		//if forward energy sum is greater than 0, add it 
 		if(EF > 0)
+		{
 			Ef_vector.push_back(EF);
+			cerr << "Event: " << ev << " EF= " << EF << endl;
+		}
 	}
 
 	//Sorting to choose X% of the lowest values
@@ -716,6 +719,7 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 	//Taking the value of EF of that index
 	EF_of_centrality_edge = Ef_vector[index_of_centrality_edge];
 
+	cerr << "Index of centrality edge: " << index_of_centrality_edge << " with EF=" << EF_of_centrality_edge << endl;
 
 	//Second iteration - choosing the centrality
 	for(ev=0; ev<treeNentries; ++ev)
@@ -742,8 +746,15 @@ void RunPSDAccSelection(TString inputfile, TString outputfile, TString system, I
 		}
 		
 		//if forward energy sum is smaller than EF edge for X% of the most central, accept the event
+		cerr << "Event " << ev;
+
 		if(EF >= EF_of_centrality_edge)
+		{
+			cerr << " rejected" << endl;
 			continue;
+		}
+		else
+			cerr << " accepted" << endl;
 
 		for(part=0; part<Npa; part++)
 		{
